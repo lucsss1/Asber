@@ -11,3 +11,4 @@ out/
 tsconfig.tsbuildinfo
 local-demo.db
 local.db
+backups/

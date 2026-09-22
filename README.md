@@ -31,6 +31,10 @@ docker compose up -d --build
 
 Then open **http://localhost:3000**.
 
+Both services bind to `127.0.0.1` and there is no authentication: on a
+personal machine the operating system is the access control. To run Asber on a
+server, follow [DEPLOY.md](DEPLOY.md) — it adds sign-in, TLS and migrations.
+
 No API key is required. The first collection cycle starts immediately:
 
 | Stage | What happens | Typical time |
@@ -209,6 +213,7 @@ Collection rules, applied everywhere:
 | [SOURCES.md](SOURCES.md) | the source registry, per-source contract, verification results |
 | [DATABASE.md](DATABASE.md) | schema, every table and column, query patterns |
 | [SECURITY.md](SECURITY.md) | threat model and the safety rules this project enforces |
+| [DEPLOY.md](DEPLOY.md) | running Asber on a server: authentication, TLS, migrations, backups |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | how to add a source, run tests, code conventions |
 | [.env.example](.env.example) | every configuration option, all optional |
 

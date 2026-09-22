@@ -1,0 +1,19 @@
+# Caddy obtains and renews the TLS certificate automatically, as long as
+# ASBER_DOMAIN resolves to this host and ports 80/443 are reachable.
+{$ASBER_DOMAIN} {
+	encode zstd gzip
+
+	# HSTS is set here rather than in the app: it must cover every response,
+	# including redirects and errors.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy frontend:3000
+
+	log {
+		output stdout
+		format console
+	}
+}
