@@ -1,0 +1,40 @@
+/** @type {import('next').NextConfig} */
+const API = process.env.API_INTERNAL_URL || "http://backend:8000";
+
+const nextConfig = {
+  output: "standalone",
+  reactStrictMode: true,
+  poweredByHeader: false,
+  async rewrites() {
+    // Only the export/download endpoints are reached from the browser;
+    // every page fetches server-side. The API key never reaches the client.
+    return [{ source: "/api/:path*", destination: `${API}/api/:path*` }];
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Content-Security-Policy",
+            // No inline scripts are used by this app; external content is text-only.
+            value: [
+              "default-src 'self'",
+              "img-src 'self' data:",
+              "style-src 'self' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-inline'",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
+        ],
+      },
+    ];
+  },
+};
+
+export default nextConfig;
