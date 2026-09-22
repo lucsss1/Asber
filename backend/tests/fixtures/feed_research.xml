@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Test Threat Research</title>
+    <link>https://research.example.com/</link>
+    <description>Fixture feed</description>
+    <item>
+      <title>APT28 exploits CVE-2026-11111 in the wild against FortiOS appliances</title>
+      <link>https://research.example.com/apt28-fortios?utm_source=rss&amp;utm_medium=feed</link>
+      <pubDate>Mon, 14 Sep 2026 12:00:00 +0000</pubDate>
+      <dc:creator>Jane Researcher</dc:creator>
+      <category>Threat Research</category>
+      <category>Vulnerabilities</category>
+      <description>&lt;p&gt;We observed &lt;b&gt;APT28&lt;/b&gt; actively exploiting CVE-2026-11111 to deploy Cobalt Strike.&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<p>We have observed <b>APT28</b> exploiting CVE-2026-11111 in the wild against internet-facing FortiOS devices.
+      The actor then used <a href="https://example.com/x">Cobalt Strike</a> and T1190 for initial access, followed by T1068.</p>
+      <script>alert('xss-in-feed')</script><img src=x onerror="alert('xss2')">]]></content:encoded>
+    </item>
+    <item>
+      <title>Patch Tuesday roundup: 60 vulnerabilities fixed</title>
+      <link>https://research.example.com/patch-tuesday</link>
+      <pubDate>Tue, 15 Sep 2026 09:00:00 +0000</pubDate>
+      <description>Microsoft fixed CVE-2026-22222, CVE-2026-40001, CVE-2026-40002, CVE-2026-40003, CVE-2026-40004, CVE-2026-40005 and more. One was exploited in the wild.</description>
+    </item>
+    <item>
+      <title>Entry without a link should be skipped</title>
+      <description>No link element here.</description>
+    </item>
+  </channel>
+</rss>

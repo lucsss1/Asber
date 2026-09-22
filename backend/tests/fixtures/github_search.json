@@ -1,0 +1,54 @@
+{
+ "total_count": 2,
+ "incomplete_results": false,
+ "items": [
+  {
+   "full_name": "researcher/CVE-2026-11111-PoC",
+   "html_url": "https://github.com/researcher/CVE-2026-11111-PoC",
+   "description": "Proof of concept exploit for CVE-2026-11111 FortiOS auth bypass",
+   "stargazers_count": 42,
+   "language": "Python",
+   "fork": false,
+   "created_at": "2026-09-12T08:00:00Z",
+   "pushed_at": "2026-09-13T08:00:00Z",
+   "owner": {
+    "login": "researcher"
+   }
+  },
+  {
+   "full_name": "defender/sigma-rules-fortios",
+   "html_url": "https://github.com/defender/sigma-rules-fortios",
+   "description": "Sigma detection rules for CVE-2026-11111 exploitation attempts",
+   "stargazers_count": 5,
+   "language": "YAML",
+   "fork": false,
+   "created_at": "2026-09-13T08:00:00Z",
+   "pushed_at": "2026-09-14T08:00:00Z",
+   "owner": {
+    "login": "defender"
+   }
+  },
+  {
+   "full_name": "someone/unrelated-tool",
+   "html_url": "https://github.com/someone/unrelated-tool",
+   "description": "Nothing to do with it",
+   "stargazers_count": 1,
+   "language": "Go",
+   "fork": false,
+   "created_at": "2026-01-01T08:00:00Z",
+   "pushed_at": "2026-01-01T08:00:00Z",
+   "owner": {
+    "login": "someone"
+   }
+  },
+  {
+   "full_name": "mirror/fork-of-poc",
+   "html_url": "https://github.com/mirror/fork-of-poc",
+   "description": "CVE-2026-11111",
+   "fork": true,
+   "owner": {
+    "login": "mirror"
+   }
+  }
+ ]
+}

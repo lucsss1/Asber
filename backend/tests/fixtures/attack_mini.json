@@ -1,0 +1,179 @@
+{
+  "type": "bundle",
+  "id": "bundle--test-0001",
+  "objects": [
+    {
+      "type": "x-mitre-collection",
+      "id": "x-mitre-collection--test",
+      "name": "Enterprise ATT&CK",
+      "x_mitre_version": "19.2",
+      "modified": "2026-08-05T21:33:58.496Z"
+    },
+    {
+      "type": "x-mitre-matrix",
+      "id": "x-mitre-matrix--test",
+      "name": "Enterprise ATT&CK",
+      "modified": "2026-08-05T21:33:58.496Z",
+      "tactic_refs": ["x-mitre-tactic--initial-access", "x-mitre-tactic--privilege-escalation"]
+    },
+    {
+      "type": "x-mitre-tactic",
+      "id": "x-mitre-tactic--initial-access",
+      "name": "Initial Access",
+      "description": "The adversary is trying to get into your network.",
+      "x_mitre_shortname": "initial-access",
+      "modified": "2026-04-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "TA0001", "url": "https://attack.mitre.org/tactics/TA0001"}]
+    },
+    {
+      "type": "x-mitre-tactic",
+      "id": "x-mitre-tactic--privilege-escalation",
+      "name": "Privilege Escalation",
+      "description": "The adversary is trying to gain higher-level permissions.",
+      "x_mitre_shortname": "privilege-escalation",
+      "modified": "2026-04-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "TA0004", "url": "https://attack.mitre.org/tactics/TA0004"}]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--t1190",
+      "name": "Exploit Public-Facing Application",
+      "description": "Adversaries may attempt to exploit a weakness in an Internet-facing host. (Citation: Some Report)",
+      "modified": "2026-05-12T15:12:00.617Z",
+      "revoked": false,
+      "x_mitre_deprecated": false,
+      "x_mitre_platforms": ["Windows", "Linux", "Network Devices"],
+      "kill_chain_phases": [{"kill_chain_name": "mitre-attack", "phase_name": "initial-access"}],
+      "external_references": [{"source_name": "mitre-attack", "external_id": "T1190", "url": "https://attack.mitre.org/techniques/T1190"}]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--t1068",
+      "name": "Exploitation for Privilege Escalation",
+      "description": "Adversaries may exploit software vulnerabilities to elevate privileges.",
+      "modified": "2026-05-12T15:12:00.617Z",
+      "x_mitre_platforms": ["Windows", "Linux"],
+      "kill_chain_phases": [{"kill_chain_name": "mitre-attack", "phase_name": "privilege-escalation"}],
+      "external_references": [{"source_name": "mitre-attack", "external_id": "T1068", "url": "https://attack.mitre.org/techniques/T1068"}]
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--revoked",
+      "name": "Revoked Technique",
+      "revoked": true,
+      "modified": "2020-01-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "T1999", "url": "https://attack.mitre.org/techniques/T1999"}]
+    },
+    {
+      "type": "intrusion-set",
+      "id": "intrusion-set--apt28",
+      "name": "APT28",
+      "description": "APT28 is a threat group attributed to a foreign military intelligence agency.",
+      "aliases": ["APT28", "Fancy Bear", "Sofacy", "Forest Blizzard"],
+      "modified": "2026-07-31T20:48:22.752Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "G0007", "url": "https://attack.mitre.org/groups/G0007"}]
+    },
+    {
+      "type": "malware",
+      "id": "malware--cobaltstrike",
+      "name": "Cobalt Strike",
+      "description": "Cobalt Strike is a commercial adversary simulation platform.",
+      "x_mitre_aliases": ["Cobalt Strike", "Beacon"],
+      "modified": "2026-06-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "S0154", "url": "https://attack.mitre.org/software/S0154"}]
+    },
+    {
+      "type": "campaign",
+      "id": "campaign--testop",
+      "name": "Operation Test Storm",
+      "description": "A fixture campaign.",
+      "aliases": ["Operation Test Storm"],
+      "first_seen": "2026-01-01T00:00:00.000Z",
+      "last_seen": "2026-09-01T00:00:00.000Z",
+      "modified": "2026-08-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "C0099", "url": "https://attack.mitre.org/campaigns/C0099"}]
+    },
+    {
+      "type": "course-of-action",
+      "id": "course-of-action--m1051",
+      "name": "Update Software",
+      "description": "Perform regular software updates.",
+      "modified": "2026-03-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "M1051", "url": "https://attack.mitre.org/mitigations/M1051"}]
+    },
+    {
+      "type": "x-mitre-data-component",
+      "id": "x-mitre-data-component--network-traffic",
+      "name": "Network Traffic Content",
+      "description": "Logged network traffic data.",
+      "modified": "2026-02-01T00:00:00.000Z",
+      "x_mitre_log_sources": [{"name": "zeek:http", "channel": "http.log"}],
+      "external_references": [{"source_name": "mitre-attack", "external_id": "DC0085", "url": "https://attack.mitre.org/datacomponents/DC0085"}]
+    },
+    {
+      "type": "x-mitre-analytic",
+      "id": "x-mitre-analytic--an0001",
+      "name": "Analytic 0001",
+      "description": "Detect anomalous POST requests to management endpoints on edge devices.",
+      "modified": "2026-02-01T00:00:00.000Z",
+      "x_mitre_platforms": ["Network Devices"],
+      "x_mitre_log_source_references": [{"x_mitre_data_component_ref": "x-mitre-data-component--network-traffic", "name": "zeek:http", "channel": "http.log"}],
+      "x_mitre_mutable_elements": [{"field": "TimeWindow", "description": "Tune per environment"}],
+      "external_references": [{"source_name": "mitre-attack", "external_id": "AN0001", "url": "https://attack.mitre.org/detectionstrategies/DET0001#AN0001"}]
+    },
+    {
+      "type": "x-mitre-detection-strategy",
+      "id": "x-mitre-detection-strategy--det0001",
+      "name": "Behavioral Detection of Public-Facing Application Exploitation",
+      "modified": "2026-02-01T00:00:00.000Z",
+      "x_mitre_analytic_refs": ["x-mitre-analytic--an0001"],
+      "external_references": [{"source_name": "mitre-attack", "external_id": "DET0001", "url": "https://attack.mitre.org/detectionstrategies/DET0001"}]
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--1",
+      "relationship_type": "uses",
+      "source_ref": "intrusion-set--apt28",
+      "target_ref": "attack-pattern--t1190",
+      "description": "APT28 has exploited public-facing applications."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--2",
+      "relationship_type": "uses",
+      "source_ref": "intrusion-set--apt28",
+      "target_ref": "malware--cobaltstrike",
+      "description": "APT28 has used Cobalt Strike."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--3",
+      "relationship_type": "detects",
+      "source_ref": "x-mitre-detection-strategy--det0001",
+      "target_ref": "attack-pattern--t1190"
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--4",
+      "relationship_type": "mitigates",
+      "source_ref": "course-of-action--m1051",
+      "target_ref": "attack-pattern--t1190",
+      "description": "Update software to the latest version."
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--5",
+      "relationship_type": "attributed-to",
+      "source_ref": "campaign--testop",
+      "target_ref": "intrusion-set--apt28"
+    },
+    {
+      "type": "relationship",
+      "id": "relationship--deprecated",
+      "relationship_type": "uses",
+      "source_ref": "intrusion-set--apt28",
+      "target_ref": "attack-pattern--revoked",
+      "x_mitre_deprecated": true
+    }
+  ]
+}

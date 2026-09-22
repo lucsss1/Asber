@@ -1,0 +1,171 @@
+{
+ "resultsPerPage": 2,
+ "startIndex": 0,
+ "totalResults": 2,
+ "format": "NVD_CVE",
+ "version": "2.0",
+ "vulnerabilities": [
+  {
+   "cve": {
+    "id": "CVE-2026-11111",
+    "sourceIdentifier": "psirt@fortinet.com",
+    "published": "2026-09-08T10:15:00.000",
+    "lastModified": "2026-09-12T14:00:00.000",
+    "vulnStatus": "Analyzed",
+    "cveTags": [],
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "An authentication bypass using an alternate path in Fortinet FortiOS allows a remote unauthenticated attacker to execute arbitrary code via crafted HTTP requests."
+     },
+     {
+      "lang": "es",
+      "value": "ignorar"
+     }
+    ],
+    "metrics": {
+     "cvssMetricV31": [
+      {
+       "source": "nvd@nist.gov",
+       "type": "Primary",
+       "cvssData": {
+        "version": "3.1",
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "baseScore": 9.8,
+        "baseSeverity": "CRITICAL"
+       },
+       "exploitabilityScore": 3.9,
+       "impactScore": 5.9
+      }
+     ],
+     "ssvcV203": [
+      {
+       "source": "cisa-cg@cisa.dhs.gov",
+       "ssvcData": {
+        "id": "CVE-2026-11111",
+        "role": "CISA Coordinator",
+        "version": "2.0.3",
+        "options": [
+         {
+          "exploitation": "active"
+         },
+         {
+          "automatable": "yes"
+         },
+         {
+          "technicalImpact": "total"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "weaknesses": [
+     {
+      "source": "nvd@nist.gov",
+      "type": "Primary",
+      "description": [
+       {
+        "lang": "en",
+        "value": "CWE-288"
+       },
+       {
+        "lang": "en",
+        "value": "CWE-94"
+       }
+      ]
+     }
+    ],
+    "configurations": [
+     {
+      "nodes": [
+       {
+        "operator": "OR",
+        "negate": false,
+        "cpeMatch": [
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:o:fortinet:fortios:*:*:*:*:*:*:*:*",
+          "versionStartIncluding": "7.0.0",
+          "versionEndExcluding": "7.0.14",
+          "matchCriteriaId": "AAA"
+         },
+         {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:o:fortinet:fortiproxy:*:*:*:*:*:*:*:*",
+          "matchCriteriaId": "BBB"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "affected": [
+     {
+      "source": "psirt@fortinet.com",
+      "affectedData": [
+       {
+        "vendor": "Fortinet",
+        "product": "FortiOS",
+        "defaultStatus": "unaffected",
+        "versions": [
+         {
+          "version": "7.0.13",
+          "status": "affected"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "references": [
+     {
+      "url": "https://fortiguard.fortinet.com/psirt/FG-IR-26-001",
+      "source": "psirt@fortinet.com",
+      "tags": [
+       "Vendor Advisory",
+       "Patch"
+      ]
+     },
+     {
+      "url": "https://fortiguard.fortinet.com/psirt/FG-IR-26-001",
+      "source": "af854a3a",
+      "tags": [
+       "Vendor Advisory"
+      ]
+     },
+     {
+      "url": "https://www.exploit-db.com/exploits/52001",
+      "source": "cve@mitre.org",
+      "tags": [
+       "Exploit"
+      ]
+     },
+     {
+      "url": "javascript:alert(1)",
+      "source": "evil",
+      "tags": []
+     }
+    ]
+   }
+  },
+  {
+   "cve": {
+    "id": "CVE-2026-33333",
+    "published": "2026-09-14T00:00:00.000",
+    "lastModified": "2026-09-14T00:00:00.000",
+    "vulnStatus": "Awaiting Analysis",
+    "descriptions": [
+     {
+      "lang": "en",
+      "value": "A use-after-free in ExampleBrowser allows remote code execution when a user opens a crafted document."
+     }
+    ],
+    "metrics": {},
+    "weaknesses": [],
+    "configurations": [],
+    "references": []
+   }
+  }
+ ]
+}
