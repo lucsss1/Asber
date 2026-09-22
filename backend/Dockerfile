@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts
+COPY alembic ./alembic
+COPY alembic.ini ./alembic.ini
 
 # Run as a non-root user (least privilege).
 RUN useradd --create-home --uid 10001 asber && chown -R asber:asber /app

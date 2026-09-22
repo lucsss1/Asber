@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     # API
     cors_origins: str = "http://localhost:3000"
     api_rate_limit_per_minute: int = 240
+    # Proxies allowed to set X-Forwarded-For (CIDR or plain address, comma
+    # separated). Empty means "no proxy in front": the peer address is used.
+    trusted_proxy_ips: str = ""
     log_level: str = "INFO"
 
     @field_validator(
@@ -86,6 +89,10 @@ class Settings(BaseSettings):
     @property
     def disabled_overrides(self) -> set[str]:
         return set(self._csv(self.sources_disabled))
+
+    @property
+    def trusted_proxy_list(self) -> list[str]:
+        return self._csv(self.trusted_proxy_ips)
 
     @property
     def github_queries(self) -> list[str]:

@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from app import db as db_module
-from app.config import Settings
+from app.config import Settings, get_settings
 from app.ingestion.base import sync_registry
 from app.ingestion.http import HttpClient, RateLimiter
 from app.services import extract
@@ -21,6 +21,21 @@ def fixture(name: str) -> bytes:
 
 def fixture_json(name: str):
     return json.loads(fixture(name))
+
+
+@pytest.fixture(autouse=True)
+def _isolate_environment(monkeypatch):
+    """Keep the host's own credentials out of the tests.
+
+    ``Settings`` reads the process environment, so a developer (or a CI runner)
+    who happens to export GITHUB_TOKEN would otherwise see unrelated failures.
+    """
+    for name in ("NVD_API_KEY", "GITHUB_TOKEN", "VIRUSTOTAL_API_KEY", "OTX_API_KEY",
+                 "ABUSECH_AUTH_KEY", "DATABASE_URL", "REDIS_URL", "TRUSTED_PROXY_IPS"):
+        monkeypatch.delenv(name, raising=False)
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture
