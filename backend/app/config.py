@@ -68,6 +68,20 @@ class Settings(BaseSettings):
             return None
         return v
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _use_psycopg3(cls, v):
+        """Managed platforms hand out `postgres://` / `postgresql://` URLs.
+
+        SQLAlchemy would read those as "use psycopg2", which this project does
+        not install, so the driver is pinned explicitly.
+        """
+        if isinstance(v, str):
+            for prefix in ("postgres://", "postgresql://"):
+                if v.startswith(prefix):
+                    return "postgresql+psycopg://" + v[len(prefix):]
+        return v
+
     @field_validator("redis_url", mode="before")
     @classmethod
     def _empty_is_none(cls, v):

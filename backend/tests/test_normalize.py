@@ -124,3 +124,16 @@ def test_cvss_falls_back_to_primary_then_first():
         {"source": "cna@example.com", "type": "Secondary", "cvssData": {"version": "3.1", "baseScore": 4.0}},
     ]}})
     assert only_cna["cvss_score"] == 4.0
+
+
+def test_managed_platform_database_url_gets_the_right_driver():
+    """Render/Heroku-style URLs name no driver; SQLAlchemy would pick psycopg2,
+    which this project does not install."""
+    from app.config import Settings
+
+    for raw in ("postgres://u:p@host:5432/db", "postgresql://u:p@host:5432/db"):
+        assert Settings(database_url=raw).database_url == "postgresql+psycopg://u:p@host:5432/db"
+    # an explicit driver is left alone
+    explicit = "postgresql+psycopg://u:p@host/db"
+    assert Settings(database_url=explicit).database_url == explicit
+    assert Settings(database_url="sqlite://").database_url == "sqlite://"

@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
-const API = process.env.API_INTERNAL_URL || "http://backend:8000";
+const raw = (process.env.API_INTERNAL_URL || "http://backend:8000").trim().replace(/\/$/, "");
+// A platform may hand us "host:port" without a scheme (e.g. Render's hostport).
+const API = /^https?:\/\//.test(raw) ? raw : `http://${raw}`;
 
 const nextConfig = {
   output: "standalone",

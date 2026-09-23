@@ -42,6 +42,53 @@ fails closed on purpose.
 
 ---
 
+## Choosing where to run it
+
+Asber needs one thing that shapes every hosting decision: **a process that stays
+up**. None of the sources push data — there is no webhook for the NVD, the CISA
+KEV or an RSS feed — so the only way to learn that something changed is to ask,
+on a schedule. That is what the scheduler does, and it is why platforms built
+purely around request-triggered functions (Vercel, Netlify, Cloudflare Workers)
+cannot host Asber, only its dashboard.
+
+Two options, both of which keep the architecture in this document intact:
+
+| | A single VPS | Render |
+|---|---|---|
+| Setup | install Docker, `docker compose -f docker-compose.prod.yml up -d` | connect the repo, Render reads `render.yaml` |
+| You maintain | the operating system, upgrades, TLS renewals (Caddy automates these) | nothing below the container |
+| TLS | Caddy, included here | provided by the platform |
+| Cost | usually the cheaper of the two | a managed premium |
+| Best when | you are comfortable administering a server | you would rather not be |
+
+**If you are not sure, use Render.** The blueprint reproduces the security model
+that matters: the API runs as a *private service*, so it has no public address
+at all, exactly as it has no published port in the Compose file.
+
+### Deploying with Render
+
+1. Push this repository to GitHub (private is fine).
+2. In Render: **New → Blueprint**, select the repository. It reads `render.yaml`.
+3. Render prompts for the values marked `sync: false`:
+   * `AUTH_ALLOWED_EMAILS` — who may sign in. Empty denies everyone.
+   * `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`, or the GitHub pair.
+   * `AUTH_URL` and `CORS_ORIGINS` — the dashboard URL Render assigns
+     (`https://asber-web.onrender.com`, or your own domain).
+4. Register the OAuth application using that URL, with the callback from the
+   table below.
+5. Pick instance sizes. The scheduler needs roughly 1 GB of RAM: the MITRE
+   ATT&CK bundle is ~55 MB of JSON parsed in memory. The database grows to
+   1–3 GB once Exploit-DB, ATT&CK and NVD are collected.
+
+Migrations run automatically — the API service executes `alembic upgrade head`
+before it starts serving.
+
+Verify the same negative case as any other deployment: signed out, the
+dashboard must redirect to `/login`, and the API must answer `401` rather than
+data.
+
+---
+
 ## Requirements
 
 * A host with 2 vCPU and 4 GB RAM. The stack idles at roughly 2 GB; the full
@@ -116,6 +163,14 @@ gunzip -c backups/asber-<stamp>.sql.gz \
 A backup that has never been restored is a hypothesis. Test one.
 
 ---
+
+## When a source breaks
+
+A source that fails repeatedly is not retried on its normal schedule. Each
+consecutive failure doubles the wait (capped at six hours), so an outage at the
+other end never turns into a tight retry loop against someone else's server.
+The counter resets on the first success, and a manual run from the Sources page
+ignores the backoff.
 
 ## Adding someone
 

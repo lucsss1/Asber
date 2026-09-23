@@ -1,0 +1,115 @@
+# Asber on Render — https://render.com/docs/blueprint-spec
+#
+# Mirrors docker-compose.prod.yml, including the part that matters most:
+# the API is a *private service*, so it has no public address. Only the
+# dashboard is exposed, and it authenticates every request before proxying.
+#
+# Deploy: push this file, then New → Blueprint and point Render at the repo.
+# Render will ask for the values marked `sync: false`.
+#
+# Instance sizes are chosen in Render's UI rather than pinned here, because the
+# plan names change. Two constraints when picking: the scheduler needs about
+# 1 GB of RAM (the MITRE ATT&CK bundle is ~55 MB of JSON parsed in memory), and
+# the database grows to 1-3 GB once Exploit-DB, ATT&CK and NVD are collected.
+
+services:
+  # ---------------------------------------------------------------- dashboard
+  - type: web
+    name: asber-web
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /login # reachable without a session; every other path redirects
+    envVars:
+      # Also becomes a Docker build argument, which the frontend image needs.
+      - key: API_INTERNAL_URL
+        fromService:
+          name: asber-api
+          type: pserv
+          property: hostport
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      - key: AUTH_SECRET
+        generateValue: true
+      # Render gives the service a URL; NextAuth needs to know it.
+      - key: AUTH_URL
+        sync: false
+      # Who may sign in. An empty list denies everyone — that is deliberate.
+      - key: AUTH_ALLOWED_EMAILS
+        sync: false
+      - key: AUTH_ADMIN_EMAILS
+        sync: false
+      # At least one OAuth provider. Leave the other pair unset.
+      - key: AUTH_GOOGLE_ID
+        sync: false
+      - key: AUTH_GOOGLE_SECRET
+        sync: false
+      - key: AUTH_GITHUB_ID
+        sync: false
+      - key: AUTH_GITHUB_SECRET
+        sync: false
+
+  # ---------------------------------------------------------------- API
+  # Private service: no public hostname, reachable only by asber-web.
+  - type: pserv
+    name: asber-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: sh -c "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: asber-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: asber-keyvalue
+          type: keyvalue
+          property: connectionString
+      - key: CORS_ORIGINS
+        sync: false # the dashboard URL
+      - key: LOG_LEVEL
+        value: INFO
+
+  # ---------------------------------------------------------------- ingestion
+  # Always-on worker. The sources are pull-only (no webhooks exist), so
+  # collection is scheduled polling with conditional requests.
+  - type: worker
+    name: asber-scheduler
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: python -m app.scheduler
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: asber-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: asber-keyvalue
+          type: keyvalue
+          property: connectionString
+      - key: RUN_ON_STARTUP
+        value: "true"
+      # Optional: raises NVD to 50 req/30s and GitHub search to 30/min.
+      - key: NVD_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # ---------------------------------------------------------------- cache/locks
+  - type: keyvalue
+    name: asber-keyvalue
+    ipAllowList: [] # private network only
+
+databases:
+  - name: asber-db
+    postgresMajorVersion: "16"
