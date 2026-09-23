@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 
-/** Paths reachable without a session: the sign-in page and the OAuth dance itself. */
+/** Paths reachable without a session: the sign-in page and the OAuth dance itself.
+ *  Next 16 renamed this file convention from "middleware" to "proxy"; the
+ *  behaviour is unchanged. */
 const PUBLIC = ["/login", "/api/auth"];
 
 /** Writes that only an admin may perform (they cost source rate-limit budget). */

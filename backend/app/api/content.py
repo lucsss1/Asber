@@ -1,7 +1,7 @@
 """Exploits, research, news and document endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import Integer, cast, or_, select
 from sqlalchemy.orm import Session
 
@@ -46,10 +46,12 @@ def list_exploits(
         term = like_term(q)
         stmt = stmt.where(or_(Exploit.title.ilike(term), Exploit.description.ilike(term),
                               Exploit.external_id.ilike(term)))
-    order = {"recent": (Exploit.published_at.desc().nullslast(),),
-             "collected": (Exploit.collected_at.desc(),),
-             "stars": (Exploit.stars.desc().nullslast(),)}.get(sort, (Exploit.published_at.desc().nullslast(),))
-    return paginate(session, stmt.order_by(*order), page, exploit_row)
+    orders = {"recent": (Exploit.published_at.desc().nullslast(),),
+              "collected": (Exploit.collected_at.desc(),),
+              "stars": (Exploit.stars.desc().nullslast(),)}
+    if sort not in orders:
+        raise HTTPException(400, f"sort must be one of {sorted(orders)}")
+    return paginate(session, stmt.order_by(*orders[sort]), page, exploit_row)
 
 
 @router.get("/documents")
