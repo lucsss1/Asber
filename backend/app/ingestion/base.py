@@ -14,7 +14,7 @@ import logging
 import time
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -23,8 +23,35 @@ from app.ingestion.http import HttpClient
 from app.ingestion.registry import REGISTRY_BY_KEY, SOURCE_REGISTRY, SourceDef
 from app.models import IngestionRun, Source, utcnow
 from app.services import correlation
+from app.services.sanitize import aware
 
 log = logging.getLogger("asber.ingestion")
+
+# A source that keeps failing is backed off instead of being retried on its
+# normal schedule: an outage at the other end should not turn into a tight
+# retry loop against someone else's server.
+BACKOFF_CAP_SECONDS = 6 * 3600
+BACKOFF_MAX_DOUBLINGS = 6
+
+
+def backoff_seconds(source: Source) -> int:
+    """How long to wait after repeated failures. 0 while the source is healthy."""
+    failures = source.consecutive_failures or 0
+    if failures <= 0:
+        return 0
+    factor = 2 ** min(failures, BACKOFF_MAX_DOUBLINGS)
+    return min(source.interval_seconds * factor, BACKOFF_CAP_SECONDS)
+
+
+def due_for_run(source: Source, now: datetime | None = None) -> bool:
+    """False while a repeatedly-failing source is still inside its backoff window."""
+    delay = backoff_seconds(source)
+    if not delay:
+        return True
+    last = aware(source.last_attempt)
+    if last is None:
+        return True
+    return (now or utcnow()) >= last + timedelta(seconds=delay)
 
 
 @dataclass
