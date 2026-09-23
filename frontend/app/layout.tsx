@@ -3,6 +3,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { SearchBox } from "@/components/SearchBox";
+import { AccountMenu } from "@/components/AccountMenu";
+import { auth } from "@/auth";
 
 const sans = Inter({
   subsets: ["latin"],
@@ -24,17 +26,28 @@ export const metadata: Metadata = {
   description: "Asber — watch, correlate and prioritise cyber threats from public sources",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Signed-out visitors only ever reach /login (the middleware guarantees it),
+  // which is rendered bare — the dashboard shell would be empty anyway.
+  const session = await auth();
+
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>
-        <div className="app">
-          <Sidebar />
-          <main className="main">
-            <SearchBox />
-            {children}
-          </main>
-        </div>
+        {session?.user ? (
+          <div className="app">
+            <Sidebar />
+            <main className="main">
+              <div className="topbar-row">
+                <SearchBox />
+                <AccountMenu user={session.user} />
+              </div>
+              {children}
+            </main>
+          </div>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

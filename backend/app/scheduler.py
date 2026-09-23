@@ -18,7 +18,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import create_schema, session_factory, session_scope
-from app.ingestion.base import run_worker, sync_registry
+from app.ingestion.base import backoff_seconds, due_for_run, run_worker, sync_registry
 from app.ingestion.coordination import pop_run_requests, source_lock
 from app.ingestion.http import HttpClient
 from app.logging_setup import setup_logging
@@ -43,11 +43,20 @@ def http_client() -> HttpClient:
     return _http
 
 
-def run_source(key: str) -> None:
+def run_source(key: str, force: bool = False) -> None:
+    """Run one source. ``force`` skips the failure backoff (manual trigger)."""
     with source_lock(key) as acquired:
         if not acquired:
             log.info("skip: run already in progress", extra={"source": key})
             return
+        if not force:
+            with session_scope() as session:
+                source = session.get(Source, key)
+                if source is not None and not due_for_run(source):
+                    log.info("skip: source in failure backoff", extra={
+                        "source": key, "consecutive_failures": source.consecutive_failures,
+                        "backoff_seconds": backoff_seconds(source)})
+                    return
         try:
             worker = build_worker(key)
         except KeyError as exc:
@@ -89,7 +98,7 @@ def bootstrap(sources: list[Source]) -> None:
 def poll_triggers() -> None:
     for key in pop_run_requests():
         log.info("manual run requested", extra={"source": key})
-        threading.Thread(target=run_source, args=(key,), daemon=True, name=f"manual-{key}").start()
+        threading.Thread(target=run_source, args=(key, True), daemon=True, name=f"manual-{key}").start()
 
 
 def main() -> None:

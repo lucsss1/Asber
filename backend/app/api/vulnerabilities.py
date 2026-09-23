@@ -86,6 +86,10 @@ def build_query(session: Session, *, window=None, kev=None, exploited=None, expl
         if obj is None:
             raise HTTPException(404, f"unknown ATT&CK entity: {actor}")
         stmt = stmt.where(Vulnerability.cve_id.in_(cves_mentioned_with(session, obj.stix_id)))
+    if sort not in SORTS:
+        # Silently falling back to the default answered 200 for a request that
+        # was never honoured. Reject it instead (OWASP A10).
+        raise HTTPException(400, f"sort must be one of {sorted(SORTS)}")
     if technique:
         obj = resolve_attack(session, technique)
         conds = [json_list_contains(Vulnerability.techniques, technique.upper())]

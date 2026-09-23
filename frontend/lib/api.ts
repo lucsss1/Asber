@@ -1,7 +1,13 @@
 /** Server-side API client. The browser never talks to the backend directly
  *  (except for /api/... export downloads, which Next.js proxies). */
 
-const BASE = process.env.API_INTERNAL_URL || "http://backend:8000";
+/** Some platforms expose a service address as "host:port", with no scheme. */
+function normaliseBase(raw: string | undefined): string {
+  const value = (raw || "http://backend:8000").trim().replace(/\/$/, "");
+  return /^https?:\/\//.test(value) ? value : `http://${value}`;
+}
+
+const BASE = normaliseBase(process.env.API_INTERNAL_URL);
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {

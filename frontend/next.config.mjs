@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
-const API = process.env.API_INTERNAL_URL || "http://backend:8000";
+const raw = (process.env.API_INTERNAL_URL || "http://backend:8000").trim().replace(/\/$/, "");
+// A platform may hand us "host:port" without a scheme (e.g. Render's hostport).
+const API = /^https?:\/\//.test(raw) ? raw : `http://${raw}`;
 
 const nextConfig = {
   output: "standalone",
@@ -8,7 +10,17 @@ const nextConfig = {
   async rewrites() {
     // Only the export/download endpoints are reached from the browser;
     // every page fetches server-side. The API key never reaches the client.
-    return [{ source: "/api/:path*", destination: `${API}/api/:path*` }];
+    //
+    // `/api/auth/*` must be excluded: those are NextAuth's own routes. A
+    // rewrite returned as a plain array is applied *before* dynamic routes,
+    // so a blanket `/api/:path*` shadows `app/api/auth/[...nextauth]` and
+    // sign-in breaks with a 404 from the backend.
+    return [
+      {
+        source: "/api/:path((?!auth(?:/|$)).*)",
+        destination: `${API}/api/:path`,
+      },
+    ];
   },
   async headers() {
     return [

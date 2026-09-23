@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import logging
-import time
-from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -16,6 +14,7 @@ from app.config import get_settings
 from app.db import create_schema, session_scope
 from app.ingestion.base import sync_registry
 from app.logging_setup import setup_logging
+from app.ratelimit import allow, client_ip
 
 log = logging.getLogger("asber.api")
 
@@ -47,22 +46,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_hits: dict[str, deque] = defaultdict(deque)
-
-
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
-    """Simple per-client token bucket (defence in depth for a locally bound service)."""
-    limit = get_settings().api_rate_limit_per_minute
-    client = request.client.host if request.client else "unknown"
-    now = time.monotonic()
-    bucket = _hits[client]
-    while bucket and now - bucket[0] > 60:
-        bucket.popleft()
-    if len(bucket) >= limit:
+    """Per-client request budget, shared across workers via Redis when available."""
+    if not allow(client_ip(request), get_settings().api_rate_limit_per_minute):
         return JSONResponse({"detail": "rate limit exceeded"}, status_code=429,
                             headers={"Retry-After": "30"})
-    bucket.append(now)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"

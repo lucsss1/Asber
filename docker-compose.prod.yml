@@ -1,0 +1,104 @@
+# Production stack for a single VPS. Standalone (not an override of
+# docker-compose.yml) because the important differences are *removals*:
+# neither the backend nor the frontend publishes a port — Caddy is the only
+# process the internet can reach, and it terminates TLS.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+name: asber
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a strong POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      # Only the Docker bridge may set X-Forwarded-For.
+      TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-172.16.0.0/12}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+    # Migrations run before the API accepts traffic; `upgrade head` is a no-op
+    # when the schema is already current.
+    command: ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"]
+    # No `ports:` — reachable only from the frontend, over the Compose network.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+  scheduler:
+    build: ./backend
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db: { condition: service_healthy }
+      backend: { condition: service_healthy }   # so migrations have finished
+    command: ["python", "-m", "app.scheduler"]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        API_INTERNAL_URL: http://backend:8000
+    env_file: [.env]
+    environment:
+      API_INTERNAL_URL: http://backend:8000
+      NODE_ENV: production
+      AUTH_URL: https://${ASBER_DOMAIN:?set ASBER_DOMAIN in .env}
+      AUTH_TRUST_HOST: "true"
+    depends_on:
+      backend: { condition: service_started }
+    # No `ports:` — Caddy proxies to it.
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ASBER_DOMAIN: ${ASBER_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # TLS certificates — losing this re-issues them
+      - caddy_config:/config
+    depends_on:
+      frontend: { condition: service_started }
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

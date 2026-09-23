@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -66,6 +67,27 @@ def get_db() -> Iterator[Session]:
 
 
 def create_schema(engine: Engine | None = None) -> None:
+    """Create every table directly from the models.
+
+    Used by the test suite and by throwaway SQLite databases. A long-lived
+    deployment must use ``alembic upgrade head`` instead: ``create_all`` only
+    creates missing tables, it never alters an existing one, so it silently
+    leaves an outdated schema in place after a model change.
+    """
     from app import models  # noqa: F401  (register tables)
 
     models.Base.metadata.create_all(engine or get_engine())
+
+
+def stamp_schema_version() -> None:
+    """Mark an existing create_all-built database as being at the baseline.
+
+    Run once when adopting migrations on a database that predates them, so
+    Alembic does not try to recreate tables that are already there.
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    cfg = Config(str(Path(__file__).resolve().parent.parent / "alembic.ini"))
+    cfg.set_main_option("script_location", str(Path(__file__).resolve().parent.parent / "alembic"))
+    command.stamp(cfg, "head")

@@ -58,9 +58,11 @@ against allow-lists.
 - Both images run as a non-root user (uid 10001 / 10002).
 - PostgreSQL and Redis are **not** published to the host — only the application
   containers reach them.
-- The API and the dashboard bind to `127.0.0.1` only. This application has **no
-  authentication** and is not designed to be exposed to a network. If you need
-  remote access, put it behind a reverse proxy with authentication and TLS.
+- **Locally** the API and dashboard bind to `127.0.0.1` and there is no
+  authentication: on a personal machine the operating system is the access
+  control. **Deployed** (see [DEPLOY.md](DEPLOY.md)) the API has no public
+  address at all, and every request to the dashboard passes an OAuth session
+  check plus an explicit e-mail allowlist before anything is proxied.
 - The API is read-only apart from `POST /api/sources/{key}/run`, which only
   queues an already-registered source; it accepts no user-supplied URL.
 - A per-client rate limit protects the API even locally.
@@ -74,9 +76,68 @@ configurable. Only excerpts of third-party articles are stored, always with the
 original URL — full-text copies are used transiently for entity extraction and
 discarded.
 
+## Testing, per change
+
+Every change is checked against the **OWASP Top 10:2025** before it ships. Two
+layers, because they prove different things.
+
+**1. Automated, in the test suite** — `backend/tests/test_security.py`
+
+```bash
+cd backend && python -m pytest tests/test_security.py -v
+```
+
+Covers what can be proven without a deployment: injection is inert (a working
+injection would return every row; a bound parameter returns none), external HTML
+never survives ingestion, dangerous URL schemes are dropped, exports cannot
+inject links or spreadsheet formulas, secrets never reach a log or a response,
+malformed input fails with a typed error instead of a stack trace, and a bad
+record never aborts a collection run.
+
+**2. Against a running deployment** — `scripts/security_scan.sh`
+
+```bash
+./scripts/security_scan.sh https://your-domain
+./scripts/security_scan.sh https://localhost -k   # local, private CA
+```
+
+Covers what only exists once the stack is assembled: that the API really is
+unreachable without a session, that known middleware bypasses fail, that TLS
+and the security headers are applied, and that the sign-in flow is reachable.
+Exit code 0 means every check passed.
+
+**3. Dependencies**
+
+```bash
+cd backend && python -m pip_audit -r requirements.txt
+cd frontend && npm audit --omit=dev
+```
+
+Run before every deployment. A03 (Software Supply Chain Failures) moved up to
+third place in the 2025 list for good reason: the most likely vulnerability in
+this project is one you inherited, not one you wrote.
+
+### What this testing has already caught
+
+| Finding | Category | Status |
+|---|---|---|
+| `/api/<anything>.png` skipped authentication and reached the backend | A01 | Fixed |
+| `/api/auth/*` was swallowed by the backend proxy, so sign-in could never complete | A07 | Fixed |
+| Next.js 15.5.4 carried a critical RCE advisory plus two high-severity ones | A03 | Fixed (16.3.6, audit clean) |
+| An invalid `sort` returned 200 while silently ignoring the request | A10 | Fixed (now 400) |
+
+The first two were found by attacking the running stack, not by reading the
+code. Both would have shipped.
+
+---
+
 ## Known limitations
 
-- **No authentication or multi-user support.** Single-user, local, by design.
+- **Authentication lives at the edge, not in the API.** Deployed, the backend
+  is only reachable from the frontend container, so anything that obtains code
+  execution inside the deployment talks to the API unauthenticated. Acceptable
+  for a small trusted group; not acceptable if Asber ever becomes multi-tenant,
+  at which point authentication has to move into FastAPI itself.
 - **Community PoC repositories are Tier 4 and unverified.** Fake and malicious
   "PoCs" are common on GitHub. The UI warns on every one. Never run them outside
   an isolated lab.
@@ -85,8 +146,9 @@ discarded.
 - **Co-mention is not attribution.** When a report mentions a CVE and an actor,
   the dashboard records a low-cost association *with the evidence link*, not a
   statement of fact.
-- `create_all` (no migrations yet) means a schema change requires a database
-  reset in Phase 1.
+- **Two schema paths.** Deployments run Alembic migrations; the test suite and
+  throwaway SQLite databases still use `create_all`. The two are checked against
+  each other, but only Alembic can alter an existing table.
 
 ## Reporting a problem
 
