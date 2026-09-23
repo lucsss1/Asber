@@ -10,7 +10,17 @@ const nextConfig = {
   async rewrites() {
     // Only the export/download endpoints are reached from the browser;
     // every page fetches server-side. The API key never reaches the client.
-    return [{ source: "/api/:path*", destination: `${API}/api/:path*` }];
+    //
+    // `/api/auth/*` must be excluded: those are NextAuth's own routes. A
+    // rewrite returned as a plain array is applied *before* dynamic routes,
+    // so a blanket `/api/:path*` shadows `app/api/auth/[...nextauth]` and
+    // sign-in breaks with a 404 from the backend.
+    return [
+      {
+        source: "/api/:path((?!auth(?:/|$)).*)",
+        destination: `${API}/api/:path`,
+      },
+    ];
   },
   async headers() {
     return [

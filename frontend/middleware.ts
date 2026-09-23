@@ -34,7 +34,13 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Everything except Next's own assets. The `/api/*` proxy is deliberately
-  // included: without it the backend would be reachable unauthenticated.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|ico|webmanifest)$).*)"],
+  matcher: [
+    // `/api` is matched on its own, with no extension exclusion. In the single
+    // catch-all below, the trailing `.png|.svg|...` exclusion also applied to
+    // API paths, so `/api/anything.png` skipped this middleware entirely and
+    // was proxied to the backend with no session.
+    "/api/:path*",
+    // Pages: everything except Next's own static assets.
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|ico|webmanifest)$).*)",
+  ],
 };
