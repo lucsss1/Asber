@@ -67,6 +67,10 @@ services:
     environment:
       API_INTERNAL_URL: http://backend:8000
       NODE_ENV: production
+      # Local stack: bound to 127.0.0.1, so the operating system is the access
+      # control and there is no OAuth provider to sign in with. Deployments use
+      # docker-compose.prod.yml or render.yaml, neither of which sets this.
+      AUTH_DISABLED: "true"
     depends_on:
       backend: { condition: service_started }
     ports:

@@ -6,6 +6,18 @@
  *  rather than failing open.
  */
 
+/** Local-only escape hatch.
+ *
+ *  On a laptop the operating system is the access control and there is no OAuth
+ *  provider to sign in with, so requiring a session would lock the dashboard
+ *  behind a login that cannot be completed. It must be set deliberately: an
+ *  unset value means authentication is required, and no deployment
+ *  configuration in this repository sets it.
+ */
+export function authDisabled(): boolean {
+  return process.env.AUTH_DISABLED === "true";
+}
+
 function parseList(raw: string | undefined): string[] {
   return (raw ?? "")
     .split(",")

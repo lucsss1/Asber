@@ -31,9 +31,11 @@ docker compose up -d --build
 
 Then open **http://localhost:3000**.
 
-Both services bind to `127.0.0.1` and there is no authentication: on a
-personal machine the operating system is the access control. To run Asber on a
-server, follow [DEPLOY.md](DEPLOY.md) — it adds sign-in, TLS and migrations.
+Both services bind to `127.0.0.1` and the local stack sets `AUTH_DISABLED=true`:
+on a personal machine the operating system is the access control, and there is
+no OAuth provider to sign in with. To run Asber on a server, follow
+[DEPLOY.md](DEPLOY.md) — neither `docker-compose.prod.yml` nor `render.yaml`
+sets that flag, so sign-in, TLS and migrations apply there.
 
 No API key is required. The first collection cycle starts immediately:
 

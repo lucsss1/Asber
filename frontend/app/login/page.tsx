@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { signIn } from "@/auth";
-import { allowedEmails } from "@/lib/authz";
+import { allowedEmails, authDisabled } from "@/lib/authz";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -17,6 +17,29 @@ export default async function Login({
 }) {
   const { next, error } = await searchParams;
   const available = PROVIDERS.filter((p) => p.configured());
+
+  if (authDisabled()) {
+    return (
+      <div className="login">
+        <div className="login-card">
+          <div className="brand">
+            <div className="brand-mark">A</div>
+            <div>
+              <div className="brand-title">Asber</div>
+              <div className="brand-sub">Cyber threat watch</div>
+            </div>
+          </div>
+          <p className="muted">
+            Authentication is disabled: this is the local stack, where the operating system is
+            the access control. <a className="link" href="/">Open the dashboard →</a>
+          </p>
+          <p className="login-note">
+            Deployments do not set <code>AUTH_DISABLED</code>, so sign-in is required there.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login">

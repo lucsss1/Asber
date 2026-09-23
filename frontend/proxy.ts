@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { authDisabled } from "@/lib/authz";
 
 /** Paths reachable without a session: the sign-in page and the OAuth dance itself.
  *  Next 16 renamed this file convention from "middleware" to "proxy"; the
@@ -12,6 +13,10 @@ const ADMIN_ONLY = /^\/api\/sources\/[^/]+\/run$/;
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+
+  // Local use: no session is required. Never set in a deployment — and
+  // scripts/security_scan.sh fails loudly if one has it enabled.
+  if (authDisabled()) return NextResponse.next();
 
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next();
