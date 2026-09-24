@@ -2,56 +2,40 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  IconBug,
-  IconCode,
-  IconDoc,
-  IconFingerprint,
-  IconFlame,
-  IconGauge,
-  IconGrid,
-  IconNews,
-  IconPulse,
-  IconSettings,
-  IconShield,
-  IconTarget,
-  IconUsers,
-  IconVirus,
-} from "@/components/icons";
 
-type Item = { href: string; label: string; icon: React.ReactNode; soon?: boolean };
+type Item = { href: string; label: string; soon?: boolean };
 
 const MAIN: { title: string; items: Item[] }[] = [
   {
     title: "Monitor",
     items: [
-      { href: "/", label: "Overview", icon: <IconGauge /> },
-      { href: "/threats", label: "Active threats", icon: <IconFlame /> },
+      { href: "/", label: "Overview" },
+      { href: "/threats", label: "Active threats" },
     ],
   },
   {
     title: "Investigate",
     items: [
-      { href: "/vulnerabilities", label: "Vulnerabilities", icon: <IconBug /> },
-      { href: "/exploits", label: "Exploits & PoCs", icon: <IconCode /> },
-      { href: "/actors", label: "Threat actors", icon: <IconUsers /> },
-      { href: "/malware", label: "Malware", icon: <IconVirus /> },
-      { href: "/campaigns", label: "Campaigns", icon: <IconTarget /> },
-      { href: "/attack", label: "MITRE ATT&CK", icon: <IconGrid /> },
+      { href: "/vulnerabilities", label: "Vulnerabilities" },
+      { href: "/exploits", label: "Exploits & PoCs" },
+      { href: "/actors", label: "Threat actors" },
+      { href: "/malware", label: "Malware" },
+      { href: "/campaigns", label: "Campaigns" },
+      { href: "/attack", label: "MITRE ATT&CK" },
     ],
   },
   {
     title: "Read",
     items: [
-      { href: "/research", label: "Research", icon: <IconDoc /> },
-      { href: "/news", label: "News", icon: <IconNews /> },
+      { href: "/research", label: "Research" },
+      { href: "/news", label: "News" },
     ],
   },
   {
     title: "System",
     items: [
-      { href: "/sources", label: "Source health", icon: <IconPulse /> },
-      { href: "/settings", label: "Settings", icon: <IconSettings /> },
+      { href: "/sources", label: "Source health" },
+      { href: "/settings", label: "Settings" },
     ],
   },
 ];
@@ -59,10 +43,10 @@ const MAIN: { title: string; items: Item[] }[] = [
 // Registered but not collecting yet — kept visible, but visually de-emphasised
 // so they don't compete with the features that work.
 const UPCOMING: Item[] = [
-  { href: "/briefing", label: "Daily briefing", icon: <IconDoc />, soon: true },
-  { href: "/detection", label: "Detection rules", icon: <IconShield />, soon: true },
-  { href: "/iocs", label: "IOCs", icon: <IconFingerprint />, soon: true },
-  { href: "/watchlist", label: "Watchlist", icon: <IconTarget />, soon: true },
+  { href: "/briefing", label: "Daily briefing", soon: true },
+  { href: "/detection", label: "Detection rules", soon: true },
+  { href: "/iocs", label: "IOCs", soon: true },
+  { href: "/watchlist", label: "Watchlist", soon: true },
 ];
 
 export function Sidebar() {
@@ -75,8 +59,7 @@ export function Sidebar() {
       href={item.href}
       className={`nav-link${isActive(item.href) ? " active" : ""}${item.soon ? " muted" : ""}`}
     >
-      <span className="nav-icon">{item.icon}</span>
-      <span>{item.label}</span>
+      <span className="nav-label">{item.label}</span>
       {item.soon ? <span className="nav-soon">soon</span> : null}
     </Link>
   );
@@ -84,11 +67,8 @@ export function Sidebar() {
   return (
     <nav className="sidebar">
       <div className="brand">
-        <div className="brand-mark">A</div>
-        <div>
-          <div className="brand-title">Asber</div>
-          <div className="brand-sub">Cyber threat watch</div>
-        </div>
+        <div className="brand-title">Asber</div>
+        <div className="brand-sub">Cyber threat watch</div>
       </div>
 
       {MAIN.map((group) => (

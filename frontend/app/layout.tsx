@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { SearchBox } from "@/components/SearchBox";
@@ -7,14 +7,24 @@ import { AccountMenu } from "@/components/AccountMenu";
 import { auth } from "@/auth";
 import { authDisabled } from "@/lib/authz";
 
-const sans = Inter({
+// Three voices: the serif speaks (titles, numerals), the sans works (UI and
+// tables), the mono records (identifiers, dates, labels).
+const display = Source_Serif_4({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+  weight: ["400", "500", "600"],
+  fallback: ["Georgia", "serif"],
+});
+
+const sans = Archivo({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-  fallback: ["system-ui", "Segoe UI", "sans-serif"],
+  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
 });
 
-const mono = JetBrains_Mono({
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-mono",
@@ -38,7 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const showShell = Boolean(session?.user) || authDisabled();
 
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body>
         {showShell ? (
           <div className="app">

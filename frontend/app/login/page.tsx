@@ -23,11 +23,8 @@ export default async function Login({
       <div className="login">
         <div className="login-card">
           <div className="brand">
-            <div className="brand-mark">A</div>
-            <div>
-              <div className="brand-title">Asber</div>
-              <div className="brand-sub">Cyber threat watch</div>
-            </div>
+            <div className="brand-title">Asber</div>
+            <div className="brand-sub">Cyber threat watch</div>
           </div>
           <p className="muted">
             Authentication is disabled: this is the local stack, where the operating system is
@@ -45,11 +42,8 @@ export default async function Login({
     <div className="login">
       <div className="login-card">
         <div className="brand">
-          <div className="brand-mark">A</div>
-          <div>
-            <div className="brand-title">Asber</div>
-            <div className="brand-sub">Cyber threat watch</div>
-          </div>
+          <div className="brand-title">Asber</div>
+          <div className="brand-sub">Cyber threat watch</div>
         </div>
 
         {error ? (

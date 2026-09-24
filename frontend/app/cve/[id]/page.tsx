@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApiError, api, type Doc, type ExploitItem, type Reason, type Vuln } from "@/lib/api";
-import { PLATFORM_LABELS, TAG_LABELS, fmtDate, riskColor, riskLabel, severityClass, tierLabel } from "@/lib/format";
-import { DocList, Empty, Ext, PageHead, Panel, ReasonList, Tier } from "@/components/ui";
+import { PLATFORM_LABELS, TAG_LABELS, fmtDate, riskColor, riskLabel, riskLevel, severityClass, tierLabel } from "@/lib/format";
+import { DocList, Empty, Ext, PageHead, Panel, ReasonList, RiskSegments, Tier } from "@/components/ui";
 import { IconAlert, IconClock } from "@/components/icons";
 import { Expandable } from "@/components/Expandable";
 
@@ -138,8 +138,8 @@ export default async function CvePage({ params }: { params: Promise<{ id: string
               {score}
             </div>
             <div className="verdict-max">{riskLabel(score)}</div>
-            <div className="verdict-bar">
-              <span style={{ width: `${Math.max(3, score)}%`, background: riskColor(score) }} />
+            <div className={`verdict-bar r-${riskLevel(score)}`}>
+              <RiskSegments value={score} />
             </div>
           </div>
           <div className="facts">

@@ -20,7 +20,7 @@ export function Expandable({ text, lines = 6, threshold = 420 }: { text: string;
         {text}
       </p>
       {long ? (
-        <button type="button" className="btn btn-ghost" style={{ padding: "4px 0", color: "var(--accent)" }}
+        <button type="button" className="btn btn-ghost" style={{ padding: "4px 0", color: "var(--signal-ink)" }}
           onClick={() => setOpen((v) => !v)}>
           {open ? "Show less" : "Show full description"}
         </button>

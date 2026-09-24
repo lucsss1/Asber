@@ -64,7 +64,7 @@ export default async function SettingsPage() {
         <div className="tags">
           {Object.entries(data.scoring_weights).map(([k, v]) => (
             <span key={k} className="tag">
-              {k.replace(/_/g, " ")} <b style={{ color: "var(--text)" }}>{v}</b>
+              {k.replace(/_/g, " ")} <b style={{ color: "var(--ink)" }}>{v}</b>
             </span>
           ))}
         </div>

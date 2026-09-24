@@ -102,7 +102,7 @@ export default async function SourcesPage() {
         <div className="health-grid">
           {off.map((s) => (
             <article key={s.key} className="health-card">
-              <div className="health-name" style={{ color: "var(--text-2)" }}>
+              <div className="health-name" style={{ color: "var(--ink-2)" }}>
                 <span className="dot dot-off" />
                 <Ext href={s.homepage} plain>
                   {s.name}
