@@ -64,8 +64,7 @@ export function Empty({ title, children }: { title?: string; children?: React.Re
 export function Tier({ tier }: { tier: number }) {
   return (
     <span className={`tier tier-${tier}`} title={tierLabel(tier)}>
-      <i className="tier-dot" />
-      Tier {tier}
+      T{tier}
     </span>
   );
 }
@@ -79,16 +78,26 @@ export function Ext({ href, children, plain }: { href: string; children: React.R
   );
 }
 
-/** Risk = a bar you can scan, not a bare number. */
+/** Ten square segments: filled = round(score / 10), at least one. */
+export function RiskSegments({ value }: { value: number }) {
+  const filled = Math.max(1, Math.round(value / 10));
+  return (
+    <span className="risk-meter" aria-hidden="true">
+      {Array.from({ length: 10 }, (_, i) => (
+        <i key={i} className={i < filled ? "f" : undefined} />
+      ))}
+    </span>
+  );
+}
+
+/** Risk = a gauge you can scan, plus the exact number. */
 export function Risk({ value, reasons }: { value: number; reasons?: Reason[] }) {
   const title = reasons?.length
     ? "Threat Relevance — " + reasons.map((r) => `+${r.points} ${r.factor}`).join(", ")
     : "Threat Relevance score";
   return (
     <span className={`risk r-${riskLevel(value)}`} title={title}>
-      <span className="risk-meter">
-        <span style={{ width: `${Math.max(3, value)}%` }} />
-      </span>
+      <RiskSegments value={value} />
       <span className="risk-score tnum">{value}</span>
     </span>
   );

@@ -109,7 +109,7 @@ export function riskColor(score: number): string {
     critical: "var(--risk-critical)",
     high: "var(--risk-high)",
     medium: "var(--risk-medium)",
-    low: "var(--risk-none)",
+    low: "var(--risk-low)",
   }[riskLevel(score)];
 }
 

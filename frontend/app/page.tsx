@@ -3,7 +3,7 @@ import { apiSafe, type AttackItem, type Doc, type ExploitItem, type Vuln } from 
 import { fmtDateTime } from "@/lib/format";
 import { Segmented, WINDOW_OPTIONS, one, type SP } from "@/components/Filters";
 import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
-import { IconAlert, IconFlame } from "@/components/icons";
+import { IconAlert } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -110,10 +110,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           const hot = Boolean(c.alert) && value > 0;
           return (
             <Link key={c.key} href={c.href} className={`kpi${hot ? " alert" : ""}${value === 0 ? " zero" : ""}`}>
-              <span className="kpi-label">
-                {hot ? <IconFlame size={14} /> : null}
-                {c.label}
-              </span>
+              <span className="kpi-label">{c.label}</span>
               <div className="kpi-value">{value}</div>
               <div className="kpi-sub">{c.hint}</div>
             </Link>
