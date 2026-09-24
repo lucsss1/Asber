@@ -36,6 +36,7 @@ const MAIN: { title: string; items: Item[] }[] = [
     items: [
       { href: "/sources", label: "Source health" },
       { href: "/settings", label: "Settings" },
+      { href: "/data-sources", label: "Data sources" },
     ],
   },
 ];
