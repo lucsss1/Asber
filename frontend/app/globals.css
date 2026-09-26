@@ -54,6 +54,12 @@
   --radius-1: 2px;
   --radius-dot: 999px;
 
+  /* motion. The built-in CSS curves are too weak to read as intentional, and
+     every press uses the same scale so the whole app depresses identically. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --press: 0.97;
+
   /* 4px spacing scale */
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
@@ -153,9 +159,11 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 .nav-link {
   display: flex; align-items: center; gap: var(--space-2);
   padding: 4px var(--space-5); color: var(--ink-2); font-size: 14px; line-height: 22px;
-  transition: color 0.12s;
+  transition: color 120ms ease;
 }
-.nav-link:hover { color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .nav-link:hover { color: var(--ink); }
+}
 /* the label itself carries the highlighter stroke */
 .nav-label { padding: 0 4px; margin-left: -4px; }
 .nav-link.active .nav-label { background: var(--signal); color: var(--on-signal); font-weight: 600; }
@@ -192,7 +200,9 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
   border-left: 1px solid var(--rule);
 }
 .kpi:first-child { border-left: 0; padding-left: 0; }
-.kpi:hover .kpi-value { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+@media (hover: hover) and (pointer: fine) {
+  .kpi:hover .kpi-value { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+}
 .kpi-label {
   display: flex; align-items: center; gap: 6px;
   font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3);
@@ -213,7 +223,9 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
   padding: var(--space-3) 0; border-bottom: 1px solid var(--rule); margin-bottom: var(--space-7);
 }
 .metric { display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-2); }
-.metric:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .metric:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+}
 .metric b { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
 .metric.is-zero b { color: var(--ink-3); }
 
@@ -247,8 +259,10 @@ th {
 }
 td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--rule); vertical-align: top; }
 th:first-child, td:first-child { padding-left: var(--space-2); }
-tbody tr { transition: background 0.1s; }
-tbody tr:hover { background: var(--surface-2); }
+tbody tr { transition: background 100ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  tbody tr:hover { background: var(--surface-2); }
+}
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .nowrap { white-space: nowrap; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -294,8 +308,10 @@ tbody tr:hover { background: var(--surface-2); }
 .tag-warn { border-color: var(--risk-high); color: var(--risk-high); }
 .tag-accent { color: var(--signal-ink); }
 .tag-mono { font-family: var(--mono); font-size: 12px; }
-a.tag:hover { color: var(--ink); border-color: var(--ink-2); }
-a.tag-accent:hover { color: var(--signal-ink); }
+@media (hover: hover) and (pointer: fine) {
+  a.tag:hover { color: var(--ink); border-color: var(--ink-2); }
+  a.tag-accent:hover { color: var(--signal-ink); }
+}
 .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 
 .signals { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -319,18 +335,29 @@ a.tag-accent:hover { color: var(--signal-ink); }
 .segmented { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: var(--radius-1); }
 .segmented a {
   padding: 4px 10px; font-family: var(--mono); font-size: 12px; line-height: 18px; color: var(--ink-2);
-  white-space: nowrap; border-left: 1px solid var(--rule); transition: background 0.12s, color 0.12s;
+  white-space: nowrap; border-left: 1px solid var(--rule);
+  transition: background 120ms ease, color 120ms ease;
 }
 .segmented a:first-child { border-left: 0; }
-.segmented a:hover { color: var(--ink); background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) {
+  .segmented a:hover { color: var(--ink); background: var(--surface-2); }
+}
+/* A segment cannot scale on its own without tearing the shared border, so the
+   whole group depresses instead. */
+.segmented { transition: transform 140ms var(--ease-out); }
+.segmented:has(a:active) { transform: scale(var(--press)); }
 .segmented a.on { background: var(--ink); color: var(--ground); }
 
 .toggle {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
   border: 1px solid var(--rule-strong); border-radius: var(--radius-1);
-  font-size: 13px; line-height: 18px; color: var(--ink-2); white-space: nowrap; transition: background 0.12s, color 0.12s;
+  font-size: 13px; line-height: 18px; color: var(--ink-2); white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease, transform 140ms var(--ease-out);
 }
-.toggle:hover { color: var(--ink); background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) {
+  .toggle:hover { color: var(--ink); background: var(--surface-2); }
+}
+.toggle:active { transform: scale(var(--press)); }
 .toggle.on { background: var(--signal); border-color: var(--signal); color: var(--on-signal); font-weight: 600; }
 .toggle .x { font-size: 14px; line-height: 1; }
 
@@ -345,9 +372,15 @@ button, .btn {
   display: inline-flex; align-items: center; gap: 6px;
   background: transparent; border: 1px solid var(--rule-strong); color: var(--ink);
   border-radius: var(--radius-1); padding: 6px 12px; font-size: 13px; font-weight: 500; line-height: 20px;
-  cursor: pointer; font-family: inherit; transition: background 0.12s, color 0.12s;
+  cursor: pointer; font-family: inherit;
+  /* box-shadow is listed because .btn-primary reveals an inset rule on hover */
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease,
+              transform 140ms var(--ease-out);
 }
-button:hover, .btn:hover { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) {
+  button:hover, .btn:hover { background: var(--surface-2); }
+}
+button:active, .btn:active { transform: scale(var(--press)); }
 .btn-primary { background: var(--signal); border-color: var(--signal); color: var(--on-signal); font-weight: 600; }
 .btn-primary:hover { background: var(--signal); box-shadow: inset 0 -2px 0 var(--on-signal); }
 .btn-ghost { border-color: transparent; color: var(--ink-2); }
@@ -358,7 +391,11 @@ details.more > summary {
   padding: 6px 12px; border: 1px solid var(--rule-strong); border-radius: var(--radius-1); user-select: none;
 }
 details.more > summary::-webkit-details-marker { display: none; }
-details.more > summary:hover { color: var(--ink); background: var(--surface-2); }
+details.more > summary { transition: background 120ms ease, color 120ms ease, transform 140ms var(--ease-out); }
+details.more > summary:active { transform: scale(var(--press)); }
+@media (hover: hover) and (pointer: fine) {
+  details.more > summary:hover { color: var(--ink); background: var(--surface-2); }
+}
 details.more[open] > summary { color: var(--ink); background: var(--surface-2); }
 .more-body { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3) 2px 2px; width: 100%; }
 
@@ -478,8 +515,14 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-2); letter-spacing: 0.06em; text-transform: uppercase;
 }
 .matrix-head span { color: var(--ink-3); font-weight: 400; }
-.matrix-cell { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; line-height: 17px; padding: 5px 10px; color: var(--ink-3); border-bottom: 1px solid var(--rule); }
-.matrix-cell:hover { background: var(--surface-2); color: var(--ink); }
+.matrix-cell {
+  display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; line-height: 17px;
+  padding: 5px 10px; color: var(--ink-3); border-bottom: 1px solid var(--rule);
+  transition: background 120ms ease, color 120ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .matrix-cell:hover { background: var(--surface-2); color: var(--ink); }
+}
 .matrix-cell.hot { color: var(--ink); background: var(--signal-wash); font-weight: 500; }
 .matrix-count { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--signal-ink); font-size: 12px; }
 
@@ -522,8 +565,18 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   .timeline li { grid-template-columns: 80px 16px 1fr; }
 }
 
-/* long external descriptions: clamped, expanded by components/Expandable */
-.desc { font-size: 15px; line-height: 24px; color: var(--ink-2); max-width: 68ch; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; }
+/* long external descriptions: clipped by the wrapper, expanded by
+   components/Expandable. The paragraph itself is never clamped, so its full
+   height stays readable and the open state animates to a real number. */
+.desc { font-size: 15px; line-height: 24px; color: var(--ink-2); max-width: 68ch; white-space: pre-wrap; }
+.expandable { position: relative; overflow: hidden; transition: max-height 260ms var(--ease-out); }
+.expandable::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 48px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--ground));
+  opacity: 0; transition: opacity 200ms var(--ease-out);
+}
+.expandable[data-clipped]::after { opacity: 1; }
+.expandable-toggle { padding: 4px 0; border-color: transparent; color: var(--signal-ink); }
 
 /* ---------------------------------------------------------------- account */
 .topbar-row { display: flex; align-items: center; gap: var(--space-4); }
@@ -552,3 +605,35 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 }
 .login-note { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
 .login-note strong { color: var(--ink-2); }
+
+/* ------------------------------------------------------------- navigation
+   Every page is force-dynamic, so a filter click is a ~300ms round-trip.
+   Without this the control you pressed sits there looking untouched, which
+   is the single thing that made Asber feel slower than it is.
+
+   A loading.tsx was tried here and removed: Next commits to the loading
+   boundary within ~5ms, which ends the pending state and blanks the content
+   area for the whole round-trip. Keeping the old page on screen with the
+   pressed control dimmed reads far better at this latency.
+
+   components/Pending renders an empty marker inside the <Link>; a child
+   cannot style its parent, so the parent selects on it with :has(). */
+.pending { display: none; }
+:is(.nav-link, .toggle, .btn, .kpi, .metric, .segmented a):has(> .pending) {
+  /* No transition: the navigation itself can finish in ~110ms, so a 120ms
+     fade-in means the acknowledgement arrives after the event it acknowledges.
+     Feedback to a press is the one thing that is never eased in. */
+  opacity: 0.55;
+  cursor: progress;
+}
+
+/* --------------------------------------------------------- reduced motion
+   Fewer and gentler, not zero: colour and opacity still carry meaning, so
+   only the movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  .segmented:has(a:active), .toggle:active, button:active, .btn:active,
+  details.more > summary:active {
+    transform: none;
+  }
+  .expandable { transition: none; }
+}

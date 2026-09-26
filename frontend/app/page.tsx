@@ -4,6 +4,7 @@ import { fmtDateTime } from "@/lib/format";
 import { Segmented, WINDOW_OPTIONS, one, type SP } from "@/components/Filters";
 import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
+import { Pending } from "@/components/Pending";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <span className="kpi-label">{c.label}</span>
               <div className="kpi-value">{value}</div>
               <div className="kpi-sub">{c.hint}</div>
+              <Pending />
             </Link>
           );
         })}
@@ -125,6 +127,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <Link key={m.key} href={m.href} className={`metric${value === 0 ? " is-zero" : ""}`}>
               <b>{value.toLocaleString()}</b>
               {m.label}
+              <Pending />
             </Link>
           );
         })}

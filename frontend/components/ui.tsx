@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Doc, ExploitItem, Reason, SourceInfo, Vuln } from "@/lib/api";
 import { PLATFORM_LABELS, fmtDate, relative, riskLevel, severityClass, tierLabel, vulnLabel } from "@/lib/format";
 import { IconExternal } from "@/components/icons";
+import { Pending } from "@/components/Pending";
 
 export function PageHead({
   title,
@@ -334,11 +335,13 @@ export function Pagination({
         {page > 1 ? (
           <Link className="btn" href={build(page - 1)}>
             ← Previous
+            <Pending />
           </Link>
         ) : null}
         {page < pages ? (
           <Link className="btn" href={build(page + 1)}>
             Next →
+            <Pending />
           </Link>
         ) : null}
       </span>
