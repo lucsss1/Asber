@@ -20,6 +20,10 @@ const PLACES: Item[] = [
   { id: "p-sources", label: "Source health", href: "/sources", group: "Go to" },
   { id: "p-data", label: "Data sources", href: "/data-sources", group: "Go to" },
   { id: "p-settings", label: "Settings", href: "/settings", group: "Go to" },
+  { id: "p-briefing", label: "Daily briefing", hint: "coming soon", href: "/briefing", group: "Go to" },
+  { id: "p-detection", label: "Detection rules", hint: "coming soon", href: "/detection", group: "Go to" },
+  { id: "p-iocs", label: "IOCs", hint: "coming soon", href: "/iocs", group: "Go to" },
+  { id: "p-watchlist", label: "Watchlist", hint: "coming soon", href: "/watchlist", group: "Go to" },
   { id: "f-exploited", label: "Being exploited", hint: "in the wild", href: "/threats?exploited=true", group: "Filter" },
   { id: "f-kev", label: "In CISA KEV", hint: "known exploited catalog", href: "/threats?kev=true", group: "Filter" },
   { id: "f-exploit", label: "Has a public exploit", href: "/threats?has_exploit=true", group: "Filter" },
@@ -57,8 +61,20 @@ export function Palette() {
         }
       }
     };
+    // The rail's More button is the visible way in, for anyone who does not
+    // know the shortcut exists.
+    const onAsk = () => {
+      const d = dialog.current;
+      if (!d || d.open) return;
+      d.showModal();
+      input.current?.focus();
+    };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("asber:palette", onAsk);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("asber:palette", onAsk);
+    };
   }, []);
 
   useEffect(() => {

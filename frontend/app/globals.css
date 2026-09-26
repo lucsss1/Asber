@@ -29,6 +29,7 @@
   /* lines: rule is decorative, rule-strong is >=3:1 for control borders */
   --rule: #23262e;
   --rule-strong: #6b7280;
+  --grid: #ffffff07;
 
   /* text; ink-3 never on surface-3 */
   --ink: #e9ebef;
@@ -91,6 +92,7 @@
     --surface-3: #d9dde5;
     --rule: #d3d8e0;
     --rule-strong: #7a8292;
+    --grid: #14161a0a;
     --ink: #14161a;
     --ink-2: #454b56;
     --ink-3: #5e6673;
@@ -115,7 +117,14 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--ground);
+  /* A hairline grid on the ground. It is barely visible and doing a lot of
+     work: it stops the page reading as cards floating on flat grey, and puts
+     everything on plotting paper instead. One gradient, no images. */
+  background-color: var(--ground);
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 64px 64px;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 14px;
@@ -143,7 +152,7 @@ h3 {
 
 /* One label voice, used by every eyebrow, column heading and key. It used to
    be mono, which put the chrome in the same register as the data. */
-.nav-group, .kpi-label, th, .kv dt, .verdict-max, .matrix-head {
+.kpi-label, th, .kv dt, .verdict-max, .matrix-head {
   font-family: var(--sans); font-size: 11px; font-weight: 620; color: var(--ink-3);
   letter-spacing: var(--track-label); text-transform: uppercase;
 }
@@ -153,52 +162,99 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 .tnum { font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------------ layout */
-.app { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 100vh; }
+/* One column. The sidebar is gone: see components/Rail. */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
 
-.sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--rule);
-  padding: var(--space-5) 0 var(--space-6);
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
+/* ------------------------------------------------------------------- rail */
+.rail {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: 0 var(--space-6); height: 52px;
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--ground) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
 }
-.brand { padding: 0 var(--space-5) var(--space-4); display: flex; flex-direction: column; gap: 2px; }
-.brand-title {
-  font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: var(--track-display);
-}
-.brand-title::after {
-  content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 4px;
-  border-radius: var(--radius-dot); background: var(--signal); vertical-align: 3px;
-}
-.brand-sub {
-  font-size: 10px; font-weight: 600; color: var(--ink-3);
-  letter-spacing: var(--track-label); text-transform: uppercase;
+@media (prefers-reduced-transparency: reduce) {
+  .rail { background: var(--ground); backdrop-filter: none; }
 }
 
-.nav-group {
-  padding: var(--space-4) var(--space-5) var(--space-1);
+.rail-brand {
+  display: flex; align-items: center; gap: 7px; flex: none;
+  font-size: 15px; font-weight: 700; letter-spacing: var(--track-display);
 }
-.nav-link {
-  display: flex; align-items: center; gap: var(--space-2);
-  padding: 4px var(--space-5); color: var(--ink-2); font-size: 14px; line-height: 22px;
-  transition: color 120ms ease;
+/* The mark is the risk meter, the same shape as the tab icon and every row. */
+.rail-mark { display: inline-grid; grid-template-columns: repeat(4, 2px); gap: 2px; height: 13px; }
+.rail-mark i { background: var(--signal); border-radius: 1px; }
+.rail-mark i:nth-child(2) { opacity: .74; }
+.rail-mark i:nth-child(3) { opacity: .48; }
+.rail-mark i:nth-child(4) { opacity: .24; }
+
+.rail-nav {
+  display: flex; align-items: center; gap: 2px; min-width: 0;
+  overflow-x: auto; scrollbar-width: none;
 }
+.rail-nav::-webkit-scrollbar { display: none; }
+.rail-link {
+  padding: 4px 9px; border-radius: var(--radius-1); white-space: nowrap;
+  font-size: 13px; color: var(--ink-3);
+  transition: color 120ms ease, background 120ms ease;
+}
+.rail-link.active { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+@media (hover: hover) and (pointer: fine) { .rail-link:hover { color: var(--ink); } }
+
+.rail-more {
+  flex: none; padding: 4px 9px; border: 0; border-radius: var(--radius-1);
+  background: none; font: inherit; font-size: 13px; color: var(--ink-3); cursor: pointer;
+  transition: color 120ms ease, background 120ms ease, transform 140ms var(--ease-out);
+}
+.rail-more::after { content: "…"; margin-left: 3px; }
+.rail-more:active { transform: scale(var(--press)); }
+@media (hover: hover) and (pointer: fine) { .rail-more:hover { color: var(--ink); background: var(--surface-2); } }
+
+.rail-end { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; flex: none; }
+.rail-end .topbar { margin: 0; }
+.rail-end .searchfield { width: 260px; }
+.rail-end .searchfield input[type="search"] { padding-top: 4px; padding-bottom: 4px; font-size: 13px; }
+
+/* ------------------------------------------------------------------ pulse
+   Thirty days of activity, as a shape rather than a number. */
+.pulse {
+  display: flex; align-items: flex-end; gap: var(--space-4);
+  padding: var(--space-3) var(--space-6) var(--space-2);
+  border-bottom: 1px solid var(--rule);
+}
+.pulse-bars { display: flex; align-items: flex-end; gap: 2px; height: 34px; flex: 1; min-width: 0; }
+.pulse-bar { position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+.pulse-bar i {
+  display: block; width: 100%; height: var(--h); min-height: 2px;
+  background: var(--signal); opacity: .5; border-radius: 1px;
+  transition: opacity 120ms ease;
+}
+.pulse-bar.empty i { background: var(--rule-strong); opacity: .35; }
 @media (hover: hover) and (pointer: fine) {
-  .nav-link:hover { color: var(--ink); }
+  .pulse-bar:hover i { opacity: 1; }
 }
-/* the label itself carries the highlighter stroke */
-.nav-label { padding: 1px 7px; margin-left: -7px; border-radius: var(--radius-1); }
-.nav-link.active .nav-label { background: var(--signal); color: var(--on-signal); font-weight: 600; }
-.nav-soon { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
-.nav-link.muted { color: var(--ink-3); }
+.pulse-bar.on i { opacity: 1; }
+/* Fixed width so the readout swapping in on hover never shifts the row. */
+.pulse-legend {
+  display: flex; align-items: baseline; gap: var(--space-3); flex: none;
+  min-width: 290px; justify-content: flex-end;
+  font-size: 11px; color: var(--ink-3);
+}
+.pulse-caption { font-weight: 620; letter-spacing: var(--track-label); text-transform: uppercase; }
+.pulse-peak { font-family: var(--mono); }
+.pulse-peak b { color: var(--ink-2); font-weight: 500; }
+.pulse-link { color: var(--signal-ink); white-space: nowrap; }
 
+/* One gutter for the whole instrument: the rail, the band and the content all
+   start at the same x. A centred measure read as a second, competing frame. */
 .main {
-  min-width: 0; padding: var(--space-5) var(--space-6) var(--space-8); max-width: 1440px;
+  min-width: 0; width: 100%; max-width: 1600px;
+  padding: var(--space-5) var(--space-6) var(--space-8);
   counter-reset: section;
 }
+/* Prose stays readable even though the frame is wide. */
+.page-sub, .lead-line, .desc { max-width: 68ch; }
 
 /* top bar */
 .topbar { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
@@ -553,21 +609,6 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .health-meta { font-family: var(--mono); font-size: 12px; color: var(--ink-3); margin-top: var(--space-1); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 
 @media (max-width: 1000px) {
-  /* The rail becomes a horizontal strip: on a phone a vertical menu pushed
-     every bit of content below the fold. */
-  .app { grid-template-columns: 1fr; }
-  .sidebar {
-    position: sticky; top: 0; z-index: 20; height: auto; display: flex; align-items: center;
-    gap: 2px; overflow-x: auto; overflow-y: hidden; padding: var(--space-2) 0;
-    border-right: none; border-bottom: 1px solid var(--rule); scrollbar-width: none;
-  }
-  .sidebar::-webkit-scrollbar { display: none; }
-  .sidebar > div { display: contents; }
-  /* these need to beat the `.sidebar > div { display: contents }` rule above */
-  .sidebar > .brand, .sidebar > .nav-upcoming { display: none; }
-  .nav-group, .nav-soon { display: none; }
-  .nav-link { padding: 4px var(--space-3); white-space: nowrap; flex: none; }
-
   .main { padding: var(--space-4) var(--space-4) var(--space-7); }
   h1 { font-size: 28px; line-height: 32px; }
   .page-head { margin-top: var(--space-5); }
@@ -581,6 +622,14 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   table { min-width: 620px; }
   .toolbar { gap: var(--space-1); }
   .searchfield { max-width: none; }
+  .rail { height: auto; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-4); }
+  .rail-nav { order: 3; width: 100%; }
+  .rail-end { width: auto; }
+  .rail-end .searchfield { width: 180px; }
+  .pulse { padding: var(--space-2) var(--space-4); gap: var(--space-3); }
+  .pulse-bars { height: 26px; }
+  .pulse-legend { flex-direction: column; gap: 1px; }
+  .pulse-link { display: none; }
   .timeline li { grid-template-columns: 80px 16px 1fr; }
 }
 
@@ -598,21 +647,6 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .expandable-toggle { padding: 4px 0; border-color: transparent; color: var(--signal-ink); }
 
 /* ---------------------------------------------------------------- account */
-/* A floating layer rather than a fixed strip: the page scrolls underneath and
-   the blur keeps it legible over whatever is passing. */
-.topbar-row {
-  display: flex; align-items: center; gap: var(--space-4);
-  position: sticky; top: 0; z-index: 10;
-  margin: calc(var(--space-5) * -1) calc(var(--space-6) * -1) 0;
-  padding: var(--space-3) var(--space-6);
-  background: color-mix(in srgb, var(--ground) 72%, transparent);
-  backdrop-filter: blur(16px) saturate(160%);
-  border-bottom: 1px solid var(--rule);
-}
-@media (prefers-reduced-transparency: reduce) {
-  .topbar-row { background: var(--ground); backdrop-filter: none; }
-}
-.topbar-row .searchfield { flex: 1; }
 .account { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; flex: none; }
 .account-email {
   font-family: var(--mono); font-size: 12px; color: var(--ink-3); max-width: 24ch;
@@ -621,6 +655,18 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .account-role {
   font-size: 10px; font-weight: 620; text-transform: uppercase; letter-spacing: var(--track-label); color: var(--ink-2);
   border: 1px solid var(--rule-strong); border-radius: var(--radius-1); padding: 0 6px;
+}
+
+/* The brand lockup now lives only on the sign-in page; the rail draws its own. */
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand-title { font-size: 22px; line-height: 26px; font-weight: 700; letter-spacing: var(--track-display); }
+.brand-title::after {
+  content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 4px;
+  border-radius: var(--radius-dot); background: var(--signal); vertical-align: 3px;
+}
+.brand-sub {
+  font-size: 10px; font-weight: 600; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
 }
 
 /* ------------------------------------------------------------------ login */
@@ -651,7 +697,7 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
    components/Pending renders an empty marker inside the <Link>; a child
    cannot style its parent, so the parent selects on it with :has(). */
 .pending { display: none; }
-:is(.nav-link, .toggle, .btn, .kpi, .metric, .segmented a):has(> .pending) {
+:is(.rail-link, .toggle, .btn, .kpi, .metric, .lead-link, .segmented a):has(> .pending) {
   /* No transition: the navigation itself can finish in ~110ms, so a 120ms
      fade-in means the acknowledgement arrives after the event it acknowledges.
      Feedback to a press is the one thing that is never eased in. */
@@ -807,7 +853,7 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 }
 
 /* ----------------------------------------------------------------- folds */
-.fold { border-bottom: 1px solid var(--rule); margin-bottom: var(--space-7); }
+.fold { border-bottom: 1px solid var(--rule); margin-bottom: var(--space-5); }
 .fold-toggle {
   display: flex; align-items: center; gap: var(--space-2);
   width: 100%; padding: var(--space-3) 0; margin: 0;
