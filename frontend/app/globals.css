@@ -1,58 +1,72 @@
 /* ===========================================================================
-   Asber design system: an intelligence brief marked with a highlighter.
-   - Colour is evidence: the risk scale appears only where there is risk.
-   - One highlighter (signal): the current page, the one primary action,
-     what has been seen. If two things on a screen are lime, one is wrong.
-   - Rules, not boxes: sections open with a hairline and sit on the ground.
-     Square corners except controls (2px) and source-health dots.
-   - Three voices: serif speaks (titles, numerals), sans works (UI), mono
-     records (ids, dates, labels).
-   - Squares are the mark: meters, severity, timeline. Circles only mean
-     collector state.
+   Asber design system: an instrument, not a publication.
+
+   - Warm means threat. Cool means interface. Nothing warm appears on screen
+     unless something is actually wrong, so the risk scale owns red, orange
+     and amber outright and the chrome never competes with it. This replaces
+     the lime highlighter, which was the brightest thing on every screen and
+     sat in the same peripheral channel as a critical severity.
+   - Two voices. The sans works; the mono records. Mono is reserved for data
+     you might copy or compare -- ids, dates, CVSS vectors, scores -- and no
+     longer sets the labels and column headings, where it made the chrome as
+     loud as the numbers.
+   - Tracking is size-specific. Display sizes tighten, body sits at zero,
+     small labels open slightly. One value for every size is wrong somewhere.
+   - Surfaces are lifted by lightness, with rules kept for real divisions.
+     Corners are soft (6px) rather than square.
    Night (dark) is the default; Paper (light) follows the OS preference.
    =========================================================================== */
 
 :root {
   color-scheme: dark;
 
-  /* grounds, lightest last */
-  --ground: #0f0f0d;
-  --surface: #171714;
-  --surface-2: #1f1f1b;
-  --surface-3: #2a2a25;
+  /* grounds, lightest last. Cool and neutral, so anything warm reads as heat */
+  --ground: #0b0c0f;
+  --surface: #121419;
+  --surface-2: #191c22;
+  --surface-3: #242833;
 
   /* lines: rule is decorative, rule-strong is >=3:1 for control borders */
-  --rule: #2d2c27;
-  --rule-strong: #6e6a5e;
+  --rule: #23262e;
+  --rule-strong: #6b7280;
 
   /* text; ink-3 never on surface-3 */
-  --ink: #ede9df;
-  --ink-2: #b6b0a2;
-  --ink-3: #908b7d;
+  --ink: #e9ebef;
+  --ink-2: #a7adba;
+  --ink-3: #7b8290;
 
-  /* the highlighter: signal is a FILL, signal-ink is accent TEXT */
-  --signal: #d7f23f;
-  --on-signal: #12130a;
-  --signal-ink: #d7f23f;
-  --signal-wash: #d7f23f1c;
-  --focus-ring: #d7f23f;
+  /* interface accent: cool on purpose, so it cannot be mistaken for risk.
+     signal is a FILL, signal-ink is accent TEXT */
+  --signal: #4b8dfd;
+  --on-signal: #f2f7ff;
+  --signal-ink: #8fbcff;
+  --signal-wash: #4b8dfd24;
+  --focus-ring: #8fbcff;
 
-  /* risk scale, used ONLY for risk/severity */
-  --risk-critical: #ff5b3a;
-  --on-critical: #150703;
-  --risk-high: #ff9b45;
-  --risk-medium: #cfae82;
+  /* risk scale, used ONLY for risk/severity -- the sole warm range on screen */
+  --risk-critical: #ff5f52;
+  --on-critical: #1a0503;
+  --risk-high: #ff9f45;
+  --risk-medium: #d9b477;
   --risk-low: var(--ink-3);
 
   /* collector state, always paired with a word */
-  --ok: #7fc99a;
-  --warn: #e3b34a;
+  --ok: #4ec98a;
+  --warn: #e0b040;
 
-  --shadow-float: 0 0 0 1px #6e6a5e, 0 12px 32px #000000a6;
+  --shadow-float: 0 0 0 1px #6b7280, 0 12px 32px #000000b3;
+  --shadow-lift: 0 1px 2px #00000059;
 
-  --radius-0: 0px;
-  --radius-1: 2px;
+  /* soft, not square: 6px on surfaces and controls, 3px on chips */
+  --radius-0: 3px;
+  --radius-1: 6px;
   --radius-dot: 999px;
+
+  /* tracking is size-specific; see the manifesto */
+  --track-display: -0.022em;
+  --track-title: -0.011em;
+  --track-body: 0em;
+  --track-label: 0.045em;
 
   /* motion. The built-in CSS curves are too weak to read as intentional, and
      every press uses the same scale so the whole app depresses identically. */
@@ -64,33 +78,35 @@
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
 
-  --display: var(--font-display), "Source Serif 4", Georgia, serif;
-  --sans: var(--font-sans), Archivo, "Helvetica Neue", Arial, sans-serif;
+  --sans: var(--font-sans), Inter, system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --mono: var(--font-mono), "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --ground: #f2efe7;
-    --surface: #faf8f2;
-    --surface-2: #ebe7dc;
-    --surface-3: #dfdacd;
-    --rule: #d5cfc1;
-    --rule-strong: #8a8373;
-    --ink: #191814;
-    --ink-2: #4a473f;
-    --ink-3: #645f53;
-    --signal-ink: #4f6200;
-    --signal-wash: #d7f23f66;
-    --focus-ring: #4f6200;
-    --risk-critical: #bb2f18;
+    --ground: #eef0f4;
+    --surface: #ffffff;
+    --surface-2: #e7eaef;
+    --surface-3: #d9dde5;
+    --rule: #d3d8e0;
+    --rule-strong: #7a8292;
+    --ink: #14161a;
+    --ink-2: #454b56;
+    --ink-3: #5e6673;
+    --signal: #1d5fd0;
+    --on-signal: #ffffff;
+    --signal-ink: #1450bb;
+    --signal-wash: #1d5fd021;
+    --focus-ring: #1450bb;
+    --risk-critical: #c02a17;
     --on-critical: #ffffff;
-    --risk-high: #9e4e00;
-    --risk-medium: #77603d;
-    --ok: #2c7447;
-    --warn: #835d00;
-    --shadow-float: 0 0 0 1px #8a8373, 0 12px 32px #1918142e;
+    --risk-high: #97490b;
+    --risk-medium: #6f5a35;
+    --ok: #17703f;
+    --warn: #7a5600;
+    --shadow-float: 0 0 0 1px #7a8292, 0 12px 32px #14161a24;
+    --shadow-lift: 0 1px 2px #14161a1a;
   }
 }
 
@@ -116,11 +132,20 @@ a { color: inherit; text-decoration: none; }
 .link:hover { text-decoration-thickness: 2px; }
 
 h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
-h1 { font-family: var(--display); font-size: 36px; line-height: 40px; font-weight: 500; letter-spacing: -0.015em; }
-h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.005em; }
+/* Hierarchy comes from weight and leading as much as size, so the headline can
+   shrink and give the screen back to the content. */
+h1 { font-size: 28px; line-height: 34px; font-weight: 640; letter-spacing: var(--track-display); }
+h2 { font-size: 15px; font-weight: 620; letter-spacing: var(--track-title); }
 h3 {
-  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3);
-  letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 11px; font-weight: 620; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+
+/* One label voice, used by every eyebrow, column heading and key. It used to
+   be mono, which put the chrome in the same register as the data. */
+.nav-group, .kpi-label, th, .kv dt, .verdict-max, .matrix-head {
+  font-family: var(--sans); font-size: 11px; font-weight: 620; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
 }
 p { margin: 0; }
 
@@ -142,19 +167,19 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 }
 .brand { padding: 0 var(--space-5) var(--space-4); display: flex; flex-direction: column; gap: 2px; }
 .brand-title {
-  font-family: var(--display); font-size: 26px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em;
+  font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: var(--track-display);
 }
 .brand-title::after {
-  content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 3px; background: var(--signal);
+  content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 4px;
+  border-radius: var(--radius-dot); background: var(--signal); vertical-align: 3px;
 }
 .brand-sub {
-  font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 10px; font-weight: 600; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
 }
 
 .nav-group {
   padding: var(--space-4) var(--space-5) var(--space-1);
-  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3);
-  letter-spacing: 0.08em; text-transform: uppercase;
 }
 .nav-link {
   display: flex; align-items: center; gap: var(--space-2);
@@ -165,7 +190,7 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
   .nav-link:hover { color: var(--ink); }
 }
 /* the label itself carries the highlighter stroke */
-.nav-label { padding: 0 4px; margin-left: -4px; }
+.nav-label { padding: 1px 7px; margin-left: -7px; border-radius: var(--radius-1); }
 .nav-link.active .nav-label { background: var(--signal); color: var(--on-signal); font-weight: 600; }
 .nav-soon { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
 .nav-link.muted { color: var(--ink-3); }
@@ -181,7 +206,8 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 .searchfield svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
 .searchfield input[type="search"] {
   width: 100%; padding: 7px 12px 7px 34px; font-size: 14px;
-  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: var(--radius-1); color: var(--ink);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-1); color: var(--ink);
+  box-shadow: var(--shadow-lift);
 }
 .searchfield input[type="search"]::placeholder { color: var(--ink-3); }
 
@@ -205,16 +231,17 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 }
 .kpi-label {
   display: flex; align-items: center; gap: 6px;
-  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3);
-  letter-spacing: 0.08em; text-transform: uppercase;
 }
 .kpi-value {
-  font-family: var(--display); font-size: 34px; line-height: 36px; font-weight: 500;
+  font-size: 30px; line-height: 34px; font-weight: 620; letter-spacing: var(--track-display);
   margin-top: var(--space-2); font-variant-numeric: tabular-nums lining-nums;
 }
 .kpi-sub { font-size: 13px; color: var(--ink-3); margin-top: var(--space-1); }
 .kpi.alert .kpi-value { color: var(--risk-critical); }
-.kpi.alert .kpi-label::before { content: ""; width: 7px; height: 7px; background: var(--risk-critical); flex: none; }
+.kpi.alert .kpi-label::before {
+  content: ""; width: 6px; height: 6px; border-radius: var(--radius-0);
+  background: var(--risk-critical); flex: none;
+}
 .kpi.zero .kpi-value { color: var(--ink-3); }
 
 /* the minor counts: inline, never competing with the ledger */
@@ -252,10 +279,8 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 /* ------------------------------------------------------------------ tables */
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th {
-  text-align: left; padding: 8px var(--space-4); background: var(--surface-2);
-  border-bottom: 1px solid var(--rule-strong); white-space: nowrap;
-  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3);
-  letter-spacing: 0.08em; text-transform: uppercase;
+  text-align: left; padding: 9px var(--space-4); background: var(--surface-2);
+  border-bottom: 1px solid var(--rule); white-space: nowrap;
 }
 td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--rule); vertical-align: top; }
 th:first-child, td:first-child { padding-left: var(--space-2); }
@@ -277,7 +302,7 @@ tbody tr { transition: background 100ms ease; }
    Ten square segments plus the number: a gauge at a glance, exact on a second look. */
 .risk { display: inline-flex; align-items: center; gap: var(--space-2); }
 .risk-meter { display: inline-grid; grid-template-columns: repeat(10, 3px); gap: 2px; height: 12px; flex: none; }
-.risk-meter i { background: var(--surface-3); }
+.risk-meter i { background: var(--surface-3); border-radius: 1px; }
 .risk-score { font-family: var(--mono); font-size: 13px; font-weight: 500; min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
 .r-critical .risk-score { color: var(--risk-critical); } .r-critical .risk-meter i.f { background: var(--risk-critical); }
 .r-high .risk-score { color: var(--risk-high); }         .r-high .risk-meter i.f { background: var(--risk-high); }
@@ -286,7 +311,7 @@ tbody tr { transition: background 100ms ease; }
 
 /* severity: a square and the score, the only other place risk colour appears */
 .sev { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sev::before { content: ""; width: 7px; height: 7px; background: var(--risk-low); flex: none; }
+.sev::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--risk-low); flex: none; }
 .sev-critical { color: var(--risk-critical); } .sev-critical::before { background: var(--risk-critical); }
 .sev-high { color: var(--risk-high); }         .sev-high::before { background: var(--risk-high); }
 .sev-medium { color: var(--ink); }             .sev-medium::before { background: var(--risk-medium); }
@@ -302,8 +327,8 @@ tbody tr { transition: background 100ms ease; }
 .tag .faint { font-family: var(--mono); font-size: 12px; }
 .tag-strong {
   background: var(--risk-critical); border-color: var(--risk-critical); color: var(--on-critical);
-  border-radius: var(--radius-0); font-family: var(--mono); font-size: 11px; font-weight: 500;
-  letter-spacing: 0.06em; text-transform: uppercase;
+  border-radius: var(--radius-0); font-size: 11px; font-weight: 650;
+  letter-spacing: var(--track-label); text-transform: uppercase;
 }
 .tag-warn { border-color: var(--risk-high); color: var(--risk-high); }
 .tag-accent { color: var(--signal-ink); }
@@ -413,8 +438,8 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   border-top: 1px dashed var(--rule-strong); border-bottom: 1px dashed var(--rule-strong);
 }
 .empty strong {
-  display: block; font-family: var(--display); font-size: 20px; line-height: 26px; font-weight: 500;
-  color: var(--ink); margin-bottom: 4px;
+  display: block; font-size: 16px; line-height: 22px; font-weight: 620;
+  letter-spacing: var(--track-title); color: var(--ink); margin-bottom: 4px;
 }
 .panel-body.flush .empty { padding-left: var(--space-2); }
 
@@ -438,9 +463,7 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .pagination .btn { font-family: var(--sans); }
 
 .kv { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: 10px var(--space-4); font-size: 14px; align-items: baseline; }
-.kv dt {
-  font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;
-}
+
 .kv dd { margin: 0; }
 
 /* score breakdown */
@@ -458,13 +481,10 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 }
 .verdict-score { min-width: 140px; }
 .verdict-num {
-  font-family: var(--display); font-size: 64px; font-weight: 500; letter-spacing: -0.02em; line-height: 60px;
+  font-size: 56px; font-weight: 660; letter-spacing: -0.03em; line-height: 56px;
   font-variant-numeric: tabular-nums lining-nums;
 }
-.verdict-max {
-  font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-top: var(--space-2);
-  letter-spacing: 0.08em; text-transform: uppercase;
-}
+.verdict-max { margin-top: var(--space-2); }
 .verdict-bar { margin-top: var(--space-3); }
 .verdict-bar .risk-meter { grid-template-columns: repeat(10, 8px); gap: 3px; height: 16px; }
 .facts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -512,7 +532,6 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .matrix-col:first-child { border-left: 0; }
 .matrix-head {
   display: flex; justify-content: space-between; gap: var(--space-2); padding: 8px 10px; background: var(--surface-2);
-  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-2); letter-spacing: 0.06em; text-transform: uppercase;
 }
 .matrix-head span { color: var(--ink-3); font-weight: 400; }
 .matrix-cell {
@@ -579,7 +598,20 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .expandable-toggle { padding: 4px 0; border-color: transparent; color: var(--signal-ink); }
 
 /* ---------------------------------------------------------------- account */
-.topbar-row { display: flex; align-items: center; gap: var(--space-4); }
+/* A floating layer rather than a fixed strip: the page scrolls underneath and
+   the blur keeps it legible over whatever is passing. */
+.topbar-row {
+  display: flex; align-items: center; gap: var(--space-4);
+  position: sticky; top: 0; z-index: 10;
+  margin: calc(var(--space-5) * -1) calc(var(--space-6) * -1) 0;
+  padding: var(--space-3) var(--space-6);
+  background: color-mix(in srgb, var(--ground) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  border-bottom: 1px solid var(--rule);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .topbar-row { background: var(--ground); backdrop-filter: none; }
+}
 .topbar-row .searchfield { flex: 1; }
 .account { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; flex: none; }
 .account-email {
@@ -587,7 +619,7 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .account-role {
-  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2);
+  font-size: 10px; font-weight: 620; text-transform: uppercase; letter-spacing: var(--track-label); color: var(--ink-2);
   border: 1px solid var(--rule-strong); border-radius: var(--radius-1); padding: 0 6px;
 }
 
