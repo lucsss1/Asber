@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AutoForm } from "@/components/AutoForm";
+import { Pending } from "@/components/Pending";
 
 export type SP = Record<string, string | string[] | undefined>;
 
@@ -40,6 +41,7 @@ export function Segmented({
       {options.map((o) => (
         <Link key={o.value} className={current === o.value ? "on" : ""} href={href(base, sp, { [param]: o.value })}>
           {o.label}
+          <Pending />
         </Link>
       ))}
     </div>
@@ -69,6 +71,7 @@ export function Toggles({
           >
             {o.label}
             {on ? <span className="x">×</span> : null}
+            <Pending />
           </Link>
         );
       })}
@@ -104,6 +107,7 @@ export function PillSelect({
           >
             {o.label}
             {on ? <span className="x">×</span> : null}
+            <Pending />
           </Link>
         );
       })}
@@ -167,6 +171,7 @@ export function ClearFilters({ base, sp, ignore = [] }: { base: string; sp: SP; 
   return (
     <Link className="btn btn-ghost" href={base}>
       Clear {active.length} filter{active.length > 1 ? "s" : ""}
+      <Pending />
     </Link>
   );
 }
