@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Doc, ExploitItem, Reason, SourceInfo, Vuln } from "@/lib/api";
 import { PLATFORM_LABELS, fmtDate, relative, riskLabel, riskLevel, severityClass, tierLabel, vulnLabel } from "@/lib/format";
 import { IconExternal } from "@/components/icons";
+import { ThreatRows } from "@/components/ThreatRows";
 import { Pending } from "@/components/Pending";
 
 export function PageHead({
@@ -200,8 +201,9 @@ export function Signals({ v }: { v: Vuln }) {
 }
 
 /**
- * Five columns instead of nine. The truncated description line is gone: it never
- * fitted, and the CVE page is one click away.
+ * Four columns, not six: risk, what it is, what is known, when it last moved.
+ * Vendor, product, CVSS and everything else live inside the row now — see
+ * components/ThreatRows.
  */
 export function ThreatTable({ items }: { items: Vuln[] }) {
   if (!items.length)
@@ -211,49 +213,16 @@ export function ThreatTable({ items }: { items: Vuln[] }) {
       </Empty>
     );
   return (
-    <table>
+    <table className="threat-table">
       <thead>
         <tr>
-          <th style={{ width: 96 }}>Risk</th>
+          <th style={{ width: 104 }}>Risk</th>
           <th>Vulnerability</th>
-          <th style={{ width: 190 }}>Product</th>
           <th style={{ width: 240 }}>Signals</th>
-          <th style={{ width: 90 }} className="num">CVSS</th>
-          <th style={{ width: 110 }}>Activity</th>
+          <th style={{ width: 104 }}>Activity</th>
         </tr>
       </thead>
-      <tbody>
-        {items.map((v) => (
-          <tr key={v.cve_id}>
-            <td>
-              <Risk value={v.relevance_score} reasons={v.relevance_reasons} id={v.cve_id} />
-            </td>
-            <td>
-              <Link href={`/cve/${v.cve_id}`} className="cve-cell">
-                <span className="cve-id">{v.cve_id}</span>
-                <span className="cve-name">{vulnLabel(v)}</span>
-              </Link>
-            </td>
-            <td>
-              <div className="truncate" style={{ maxWidth: 180 }}>
-                {v.vendor || "—"}
-              </div>
-              <div className="faint truncate" style={{ maxWidth: 180 }}>
-                {v.product || ""}
-              </div>
-            </td>
-            <td>
-              <Signals v={v} />
-            </td>
-            <td className="num">
-              <Severity score={v.cvss_score} severity={v.severity} />
-            </td>
-            <td className="nowrap faint" title={`First seen ${fmtDate(v.first_seen)}`}>
-              {relative(v.last_activity_at)}
-            </td>
-          </tr>
-        ))}
-      </tbody>
+      <ThreatRows items={items} />
     </table>
   );
 }
