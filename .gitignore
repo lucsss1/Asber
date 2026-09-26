@@ -12,3 +12,6 @@ tsconfig.tsbuildinfo
 local-demo.db
 local.db
 backups/
+
+# Playwright MCP scratch output (screenshots, snapshots, console and network logs)
+.playwright-mcp/
