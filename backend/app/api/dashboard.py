@@ -106,6 +106,47 @@ def overview(session: Session = Depends(get_db), window: str = "24h"):
     }
 
 
+@router.get("/dashboard/pulse")
+def pulse(session: Session = Depends(get_db), days: int = Query(30, ge=7, le=90)):
+    """Daily threat activity, for the signal band that runs across every page.
+
+    One row per day, always `days` long even where nothing happened: a gap in
+    the band has to read as a quiet day, not as missing data.
+    """
+    today = datetime.now(timezone.utc).date()
+    start = today - timedelta(days=days - 1)
+
+    day = func.date(Vulnerability.last_activity_at)
+    rows = session.execute(
+        select(
+            day.label("day"),
+            func.count().label("total"),
+            func.sum(cast(Vulnerability.actively_exploited, Integer)).label("exploited"),
+            func.sum(cast(Vulnerability.in_kev, Integer)).label("kev"),
+        )
+        .where(Vulnerability.last_activity_at.is_not(None))
+        .where(day >= start)
+        .group_by(day)
+    ).all()
+
+    by_day = {str(r.day): r for r in rows}
+    series = []
+    for i in range(days):
+        d = start + timedelta(days=i)
+        r = by_day.get(str(d))
+        series.append(
+            {
+                "date": d.isoformat(),
+                "total": int(r.total) if r else 0,
+                "exploited": int(r.exploited or 0) if r else 0,
+                "kev": int(r.kev or 0) if r else 0,
+            }
+        )
+
+    peak = max((p["total"] for p in series), default=0)
+    return {"days": days, "peak": peak, "series": series}
+
+
 @router.get("/search")
 def search(q: str = Query(min_length=2, max_length=200), session: Session = Depends(get_db), limit: int = 10):
     term = like_term(q)

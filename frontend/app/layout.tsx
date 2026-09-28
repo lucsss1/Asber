@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { Rail } from "@/components/Rail";
+import { Pulse } from "@/components/Pulse";
 import { SearchBox } from "@/components/SearchBox";
 import { AccountMenu } from "@/components/AccountMenu";
 import { PopoverAnchor } from "@/components/PopoverAnchor";
@@ -50,12 +51,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         {showShell ? (
           <div className="app">
-            <Sidebar />
+            <Rail>
+              <SearchBox />
+              {session?.user ? <AccountMenu user={session.user} /> : null}
+            </Rail>
+            <Pulse />
             <main className="main">
-              <div className="topbar-row">
-                <SearchBox />
-                {session?.user ? <AccountMenu user={session.user} /> : null}
-              </div>
               {children}
               <PopoverAnchor />
               <Palette />
