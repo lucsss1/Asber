@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Asber">
+  <!-- The mark is the risk meter, not a letter: at 16px a glyph turns to mush,
+       and the gauge is the thing you actually recognise from every row. -->
+  <rect width="32" height="32" rx="7" fill="#0b0c0f"/>
+  <g fill="#4b8dfd">
+    <rect x="7"  y="9"  width="3" height="14" rx="1.2"/>
+    <rect x="12" y="9"  width="3" height="14" rx="1.2" opacity=".78"/>
+    <rect x="17" y="9"  width="3" height="14" rx="1.2" opacity=".52"/>
+    <rect x="22" y="9"  width="3" height="14" rx="1.2" opacity=".26"/>
+  </g>
+</svg>
