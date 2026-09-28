@@ -669,3 +669,68 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   }
   .expandable { transition: none; }
 }
+
+/* ------------------------------------------------------------ score popover
+   The Threat Relevance breakdown. It was a title attribute, which made the
+   one thing the score promises to be — explainable — wait a second for a
+   browser tooltip and put it out of reach entirely on a touch screen. */
+.risk-trigger {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: 3px 5px; margin: -3px -5px;
+  background: none; border: 0; border-radius: var(--radius-0);
+  font: inherit; color: inherit; cursor: pointer;
+  transition: background 120ms ease, transform 140ms var(--ease-out);
+}
+.risk-trigger:active { transform: scale(var(--press)); }
+@media (hover: hover) and (pointer: fine) {
+  .risk-trigger:hover { background: var(--surface-2); }
+}
+
+.score-pop {
+  position: fixed; inset: auto; margin: 0;
+  width: 330px; max-width: calc(100vw - 16px);
+  /* A score can carry eleven factors; the panel scrolls rather than growing
+     past the viewport and forcing the flip logic to give up. */
+  max-height: min(420px, calc(100vh - 32px)); overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--space-4);
+  background: var(--surface); color: var(--ink);
+  border: 0; border-radius: var(--radius-1); box-shadow: var(--shadow-float);
+  opacity: 1; transform: scale(1);
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out),
+    display 150ms allow-discrete,
+    overlay 150ms allow-discrete;
+}
+
+/* Entry is a keyframe, not @starting-style. The CSS minifier emits a
+   downlevel copy of an @starting-style rule as a plain rule for browsers that
+   lack it, and `.score-pop:popover-open { opacity: 0 }` sitting loose in the
+   sheet pinned every open popover to invisible. A one-shot open does not need
+   the interruptibility a transition would buy. Exit still transitions, which
+   is what allow-discrete is carrying.
+   Never from scale(0): it has a shape before it arrives. */
+.score-pop:popover-open { animation: pop-in 150ms var(--ease-out); }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.97); } }
+.score-pop:not(:popover-open) { opacity: 0; transform: scale(0.97); }
+
+.score-pop-head {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding-bottom: var(--space-3); margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px; color: var(--ink-3);
+}
+.score-pop-head b {
+  font-size: 20px; font-weight: 640; letter-spacing: var(--track-title); color: var(--ink);
+}
+.score-pop-foot {
+  margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--rule);
+  font-size: 12px; line-height: 16px; color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-pop { transition: opacity 120ms ease, display 120ms allow-discrete, overlay 120ms allow-discrete; }
+  .score-pop:popover-open { animation: none; }
+  .score-pop:not(:popover-open) { transform: none; }
+  .risk-trigger:active { transform: none; }
+}

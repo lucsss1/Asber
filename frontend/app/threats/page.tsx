@@ -49,7 +49,7 @@ export default async function ThreatsPage({ searchParams }: { searchParams: Prom
     <>
       <PageHead
         title="Active threats"
-        sub="Ranked by Threat Relevance — a transparent score. Hover any bar to see the factors behind it."
+        sub="Ranked by Threat Relevance — a transparent score. Select any bar to see the factors behind it."
         right={<Segmented base="/threats" sp={sp} param="window" options={WINDOW_OPTIONS} fallback="30d" />}
       />
 

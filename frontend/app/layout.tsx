@@ -4,6 +4,7 @@ import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { SearchBox } from "@/components/SearchBox";
 import { AccountMenu } from "@/components/AccountMenu";
+import { PopoverAnchor } from "@/components/PopoverAnchor";
 import { auth } from "@/auth";
 import { authDisabled } from "@/lib/authz";
 
@@ -55,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 {session?.user ? <AccountMenu user={session.user} /> : null}
               </div>
               {children}
+              <PopoverAnchor />
             </main>
           </div>
         ) : (

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Doc, ExploitItem, Reason, SourceInfo, Vuln } from "@/lib/api";
-import { PLATFORM_LABELS, fmtDate, relative, riskLevel, severityClass, tierLabel, vulnLabel } from "@/lib/format";
+import { PLATFORM_LABELS, fmtDate, relative, riskLabel, riskLevel, severityClass, tierLabel, vulnLabel } from "@/lib/format";
 import { IconExternal } from "@/components/icons";
 import { Pending } from "@/components/Pending";
 
@@ -91,15 +91,54 @@ export function RiskSegments({ value }: { value: number }) {
   );
 }
 
-/** Risk = a gauge you can scan, plus the exact number. */
-export function Risk({ value, reasons }: { value: number; reasons?: Reason[] }) {
-  const title = reasons?.length
-    ? "Threat Relevance — " + reasons.map((r) => `+${r.points} ${r.factor}`).join(", ")
-    : "Threat Relevance score";
-  return (
-    <span className={`risk r-${riskLevel(value)}`} title={title}>
+/**
+ * Risk = a gauge you can scan, the exact number, and the whole breakdown on
+ * demand.
+ *
+ * The breakdown used to live in a title attribute, which meant the one thing
+ * the score promises to be — explainable — waited a second for a browser
+ * tooltip and was unreachable entirely on a touch screen. It is a popover now:
+ * server-rendered markup, opened and dismissed by the platform, positioned by
+ * components/PopoverAnchor.
+ */
+export function Risk({ value, reasons, id }: { value: number; reasons?: Reason[]; id?: string }) {
+  const level = riskLevel(value);
+  const meter = (
+    <>
       <RiskSegments value={value} />
       <span className="risk-score tnum">{value}</span>
+    </>
+  );
+
+  if (!reasons?.length || !id) {
+    return (
+      <span className={`risk r-${level}`} aria-label={`Threat Relevance ${value} of 100`}>
+        {meter}
+      </span>
+    );
+  }
+
+  const pid = `score-${id}`;
+  return (
+    <span className={`risk r-${level}`}>
+      <button
+        type="button"
+        className="risk-trigger"
+        popoverTarget={pid}
+        aria-label={`Threat Relevance ${value} of 100, ${riskLabel(value).toLowerCase()}. Show how it was scored.`}
+      >
+        {meter}
+      </button>
+      <div id={pid} popover="auto" className="score-pop" role="dialog" aria-label={`How ${value} was scored`}>
+        <div className="score-pop-head">
+          <b className="tnum">{value}</b>
+          <span>{riskLabel(value)}</span>
+        </div>
+        <ReasonList reasons={reasons} />
+        <p className="score-pop-foot">
+          An internal prioritisation score, not a replacement for CVSS.
+        </p>
+      </div>
     </span>
   );
 }
@@ -187,7 +226,7 @@ export function ThreatTable({ items }: { items: Vuln[] }) {
         {items.map((v) => (
           <tr key={v.cve_id}>
             <td>
-              <Risk value={v.relevance_score} reasons={v.relevance_reasons} />
+              <Risk value={v.relevance_score} reasons={v.relevance_reasons} id={v.cve_id} />
             </td>
             <td>
               <Link href={`/cve/${v.cve_id}`} className="cve-cell">
