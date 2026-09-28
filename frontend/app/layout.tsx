@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Mono, Source_Serif_4 } from "next/font/google";
+import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { SearchBox } from "@/components/SearchBox";
@@ -7,28 +7,24 @@ import { AccountMenu } from "@/components/AccountMenu";
 import { auth } from "@/auth";
 import { authDisabled } from "@/lib/authz";
 
-// Three voices: the serif speaks (titles, numerals), the sans works (UI and
-// tables), the mono records (identifiers, dates, labels).
-const display = Source_Serif_4({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-display",
-  weight: ["400", "500", "600"],
-  fallback: ["Georgia", "serif"],
-});
-
-const sans = Archivo({
+// Two voices, not three. The sans works (everything you read and operate);
+// the mono records (identifiers, dates, CVSS vectors, scores). The serif is
+// gone: it spoke in an editorial register, and Asber is scanned, not read.
+//
+// Mono is now reserved for data. It used to also set every label and column
+// heading, which made the chrome as loud as the numbers.
+const sans = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
+  fallback: ["system-ui", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
 });
 
 const mono = IBM_Plex_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-mono",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   fallback: ["ui-monospace", "Consolas", "monospace"],
 });
 
@@ -48,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const showShell = Boolean(session?.user) || authDisabled();
 
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>
         {showShell ? (
           <div className="app">
