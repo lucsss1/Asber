@@ -28,22 +28,22 @@ const HEADLINE = [
     key: "actively_exploited",
     label: "Being exploited",
     href: "/threats?exploited=true",
-    hint: "Confirmed exploitation in the wild",
+    hint: "being exploited in the wild",
     alert: true,
   },
   {
     key: "kev_added",
     label: "Added to CISA KEV",
     href: "/threats?kev=true",
-    hint: "New entries in the KEV catalog",
+    hint: "added to the CISA KEV catalog",
     alert: true,
   },
-  { key: "new_pocs", label: "New public PoCs", href: "/exploits?kind=poc", hint: "Unverified community code" },
-  { key: "new_research", label: "New research", href: "/research", hint: "Tier 1–2 reports" },
 ];
 
 /** Everything else: present, but not competing for attention. */
 const SECONDARY = [
+  { key: "new_pocs", label: "public PoCs", href: "/exploits?kind=poc" },
+  { key: "new_research", label: "research reports", href: "/research" },
   { key: "new_cves", label: "CVEs published", href: "/vulnerabilities" },
   { key: "new_exploits", label: "Exploits", href: "/exploits?kind=exploit" },
   { key: "new_news", label: "News", href: "/news" },
@@ -106,20 +106,33 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       ) : null}
 
-      <div className="kpis">
-        {HEADLINE.map((c) => {
-          const value = data.cards[c.key] ?? 0;
-          const hot = Boolean(c.alert) && value > 0;
-          return (
-            <Link key={c.key} href={c.href} className={`kpi${hot ? " alert" : ""}${value === 0 ? " zero" : ""}`}>
-              <span className="kpi-label">{c.label}</span>
-              <div className="kpi-value">{value}</div>
-              <div className="kpi-sub">{c.hint}</div>
-              <Pending />
-            </Link>
-          );
-        })}
-      </div>
+      {/* The answer, not a dashboard. Everything that is not the answer is
+          folded below, and the press is what tells you it is there. */}
+      <section className="lead">
+        {urgent > 0 ? (
+          <>
+            <p className="lead-line">
+              <span className="lead-count">{urgent}</span>
+              <span>{urgent === 1 ? "thing needs" : "things need"} your attention.</span>
+            </p>
+            <p className="lead-detail">
+              {HEADLINE.filter((c) => (data.cards[c.key] ?? 0) > 0).map((c, i) => (
+                <span key={c.key}>
+                  {i > 0 ? <span className="lead-sep">·</span> : null}
+                  <Link href={c.href} className="lead-link">
+                    <b>{data.cards[c.key]}</b> {c.hint}
+                    <Pending />
+                  </Link>
+                </span>
+              ))}
+            </p>
+          </>
+        ) : (
+          <p className="lead-line calm">
+            <span>Nothing needs you in {WINDOW_LABEL[window] ?? window}.</span>
+          </p>
+        )}
+      </section>
 
       <Fold label="Everything else collected" count={SECONDARY.length}>
       <div className="metric-strip">
@@ -148,7 +161,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <ThreatTable items={data.top_threats} />
       </Panel>
 
-      <div className="grid-2">
+      <Fold label="Latest research" count={data.latest_research.length}>
         <Panel
           title="Latest research"
           action={
@@ -159,6 +172,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         >
           <DocList docs={data.latest_research} limit={5} />
         </Panel>
+      </Fold>
+      <Fold label="Security news" count={data.latest_news.length}>
         <Panel
           title="Security news"
           action={
@@ -169,8 +184,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         >
           <DocList docs={data.latest_news} limit={5} />
         </Panel>
-      </div>
-
+      </Fold>
+      <Fold label="Who and what is being talked about" count={data.trending_attack.length}>
       <Panel
         title="Who and what is being talked about"
         action={
@@ -194,6 +209,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Empty>
         )}
       </Panel>
+      </Fold>
     </>
   );
 }

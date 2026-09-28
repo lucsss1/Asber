@@ -1,4 +1,5 @@
 import { IconSearch } from "@/components/icons";
+import { PaletteHint } from "@/components/PaletteHint";
 
 /** Plain GET form — global search needs no client JavaScript. */
 export function SearchBox() {
@@ -13,6 +14,7 @@ export function SearchBox() {
           aria-label="Search"
           maxLength={200}
         />
+        <PaletteHint />
       </form>
     </div>
   );

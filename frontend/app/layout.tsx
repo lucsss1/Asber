@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { SearchBox } from "@/components/SearchBox";
 import { AccountMenu } from "@/components/AccountMenu";
 import { PopoverAnchor } from "@/components/PopoverAnchor";
+import { Palette } from "@/components/Palette";
 import { auth } from "@/auth";
 import { authDisabled } from "@/lib/authz";
 
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
               {children}
               <PopoverAnchor />
+              <Palette />
             </main>
           </div>
         ) : (

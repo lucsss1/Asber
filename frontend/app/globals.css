@@ -834,3 +834,83 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   .rd, .rd-loading { position: sticky; left: 0; width: calc(100vw - 32px); padding-left: var(--space-3); }
   .rd-grid { grid-template-columns: 1fr; gap: var(--space-3); }
 }
+
+/* ------------------------------------------------------------------ lead
+   The Overview's one sentence. It answers the only question anyone opens
+   Asber with, and everything that is not the answer is folded below it. */
+.lead { padding: var(--space-6) 0 var(--space-7); }
+.lead-line {
+  display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap;
+  font-size: 26px; line-height: 34px; font-weight: 620; letter-spacing: var(--track-display);
+}
+.lead-line.calm { color: var(--ink-2); font-weight: 500; }
+.lead-count {
+  font-size: 56px; line-height: 52px; font-weight: 680; letter-spacing: -0.03em;
+  color: var(--risk-critical); font-variant-numeric: tabular-nums lining-nums;
+}
+.lead-detail { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); font-size: 14px; }
+.lead-sep { color: var(--ink-3); margin-right: var(--space-2); }
+.lead-link { color: var(--ink-2); border-bottom: 1px solid var(--rule-strong); padding-bottom: 1px; }
+.lead-link b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+@media (hover: hover) and (pointer: fine) {
+  .lead-link:hover { color: var(--ink); border-bottom-color: var(--ink-2); }
+}
+@media (max-width: 1000px) {
+  .lead { padding: var(--space-5) 0 var(--space-6); }
+  .lead-line { font-size: 20px; line-height: 26px; }
+  .lead-count { font-size: 42px; line-height: 40px; }
+}
+
+/* --------------------------------------------------------------- palette
+   No open or close animation on purpose: this is a keyboard action used
+   dozens of times a day, and motion on it reads as lag. */
+.palette { border: 0; padding: 0; background: none; max-width: none; max-height: none; }
+.palette::backdrop { background: #000000a6; }
+.palette-box {
+  width: min(560px, calc(100vw - 32px));
+  margin: 12vh auto 0;
+  background: var(--surface); border-radius: var(--radius-1); box-shadow: var(--shadow-float);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.palette-input {
+  width: 100%; padding: var(--space-4); border: 0; border-bottom: 1px solid var(--rule);
+  border-radius: 0; background: none; color: var(--ink); font-size: 15px; font-family: inherit;
+}
+.palette-input:focus { outline: none; }
+.palette-input::placeholder { color: var(--ink-3); }
+.palette-list { list-style: none; margin: 0; padding: var(--space-2) 0; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
+.palette-group {
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  font-size: 11px; font-weight: 620; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.palette-item {
+  display: flex; align-items: baseline; gap: var(--space-3); width: 100%;
+  padding: 7px var(--space-4); margin: 0; border: 0; border-radius: 0;
+  background: none; font: inherit; color: var(--ink-2); text-align: left; cursor: pointer;
+}
+.palette-item.on { background: var(--signal); color: var(--on-signal); }
+.palette-label { flex: none; font-size: 14px; }
+.palette-item.on .palette-label { font-weight: 600; }
+.palette-hint {
+  font-size: 12.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.palette-item.on .palette-hint { color: var(--on-signal); opacity: 0.75; }
+.palette-empty { padding: var(--space-5) var(--space-4); color: var(--ink-3); font-size: 13px; }
+.palette-foot {
+  display: flex; gap: var(--space-4); padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--rule); font-size: 11.5px; color: var(--ink-3);
+}
+.palette-foot kbd {
+  font-family: var(--mono); font-size: 11px; border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-0); padding: 0 4px; margin-right: 3px; color: var(--ink-2);
+}
+
+.searchfield-kbd {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
+  border: 1px solid var(--rule); border-radius: var(--radius-0); padding: 1px 5px;
+  pointer-events: none; white-space: nowrap;
+}
+.searchfield input[type="search"] { padding-right: 62px; }
+@media (max-width: 1000px) { .searchfield-kbd { display: none; } }
