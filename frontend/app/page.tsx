@@ -5,6 +5,7 @@ import { Segmented, WINDOW_OPTIONS, one, type SP } from "@/components/Filters";
 import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
 import { Pending } from "@/components/Pending";
+import { Fold } from "@/components/Fold";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         })}
       </div>
 
+      <Fold label="Everything else collected" count={SECONDARY.length}>
       <div className="metric-strip">
         {SECONDARY.map((m) => {
           const value = data.cards[m.key] ?? 0;
@@ -132,6 +134,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           );
         })}
       </div>
+      </Fold>
 
       <Panel
         title={urgent > 0 ? "Start here" : "Highest relevance"}
