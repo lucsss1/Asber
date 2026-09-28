@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Pending } from "@/components/Pending";
 
 type Item = { href: string; label: string; soon?: boolean };
 
@@ -62,6 +63,7 @@ export function Sidebar() {
     >
       <span className="nav-label">{item.label}</span>
       {item.soon ? <span className="nav-soon">soon</span> : null}
+      <Pending />
     </Link>
   );
 
