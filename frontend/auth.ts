@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 
-import { isAdmin, isAllowed } from "@/lib/authz";
+import { isAdmin, isAllowed, isRampartOwner } from "@/lib/authz";
 
 /** Only the providers that were actually configured are offered. */
 const providers = [
@@ -22,10 +22,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     jwt({ token }) {
       token.admin = isAdmin(token.email);
+      // Separate from admin on purpose: see lib/authz.isRampartOwner.
+      token.rampart = isRampartOwner(token.email);
       return token;
     },
     session({ session, token }) {
       session.user.admin = Boolean(token.admin);
+      session.user.rampart = Boolean(token.rampart);
       return session;
     },
   },
