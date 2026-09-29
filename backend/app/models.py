@@ -328,3 +328,108 @@ class EntityLink(Base):
     evidence: Mapped[str | None] = mapped_column(Text)
     observed_at: Mapped[datetime | None] = mapped_column(TZ, index=True)
     created_at: Mapped[datetime] = mapped_column(TZ, default=utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Rampart: the owner's environment
+#
+# An inventory is a map of somebody's attack surface, which makes it the most
+# sensitive data this system holds. Every table here carries ``owner_id`` from
+# the first migration rather than waiting for multi-user, so that the day a
+# second owner exists no row has to be backfilled and no query has to be
+# revisited: only ``api.deps.current_owner`` changes.
+#
+# Every read and write goes through ``services.rampart.repository``, which is
+# the only module allowed to build a query against these tables.
+# ---------------------------------------------------------------------------
+class Environment(Base):
+    """A named collection of assets belonging to one owner.
+
+    ``kind`` exists so the roadmap's alerting watchlists are built on this
+    table rather than beside it: a watchlist is an environment with a different
+    kind, and alerts hang off ``environment_id``.
+    """
+
+    __tablename__ = "environments"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "name", name="uq_environment_owner_name"),
+        Index("ix_environment_owner", "owner_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_id: Mapped[str] = mapped_column(String(320), nullable=False)
+    name: Mapped[str] = mapped_column(String(120))
+    kind: Mapped[str] = mapped_column(String(32), default="inventory")  # inventory|watchlist
+    created_at: Mapped[datetime] = mapped_column(TZ, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(TZ, default=utcnow, onupdate=utcnow)
+
+
+class EnvironmentAsset(Base):
+    """One piece of software or firmware the owner runs.
+
+    The asset is the *software*, not the box: matching happens against vendor,
+    product and version, so "FortiOS 7.2.8" is the asset and "FortiGate 100F"
+    is only ``hardware_model``, a label that never reaches the matcher.
+
+    ``catalogued`` records whether vendor/product came from the catalogue built
+    out of collected data or were typed by hand. Free text is allowed — the
+    inventory should never be blocked by a gap in NVD's vocabulary — but it is
+    marked, and the UI shows it as unmatched rather than pretending it is known.
+    """
+
+    __tablename__ = "environment_assets"
+    __table_args__ = (
+        Index("ix_asset_owner_environment", "owner_id", "environment_id"),
+        Index("ix_asset_vendor_product", "vendor", "product"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_id: Mapped[str] = mapped_column(String(320), nullable=False)
+    environment_id: Mapped[int] = mapped_column(ForeignKey("environments.id", ondelete="CASCADE"), index=True)
+
+    label: Mapped[str] = mapped_column(String(120))
+    category: Mapped[str] = mapped_column(String(32))  # firewall|switch|storage|hypervisor|os|application|other
+    vendor: Mapped[str] = mapped_column(String(200))
+    product: Mapped[str] = mapped_column(String(300))
+    version: Mapped[str | None] = mapped_column(String(64))
+    cpe: Mapped[str | None] = mapped_column(String(400))
+    catalogued: Mapped[bool] = mapped_column(Boolean, default=False)
+    hardware_model: Mapped[str | None] = mapped_column(String(120))
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(TZ, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(TZ, default=utcnow, onupdate=utcnow)
+
+
+class EnvironmentMatch(Base):
+    """Why one asset is, or might be, affected by one CVE.
+
+    ``not_affected`` rows are kept rather than dropped. "We checked, and the
+    version you run is outside the affected range" is an answer worth showing,
+    and silently hiding it would make the absence of a CVE indistinguishable
+    from never having looked.
+
+    ``exposure`` is the stored Environment-exposure factor. It mirrors
+    ``vulnerabilities.relevance_score``: written when the match is computed,
+    never per request, so the tables can sort and filter on it. The global
+    relevance score is shared by every view and is deliberately untouched.
+    """
+
+    __tablename__ = "environment_matches"
+    __table_args__ = (
+        UniqueConstraint("asset_id", "cve_id", name="uq_environment_match"),
+        Index("ix_match_owner_environment_state", "owner_id", "environment_id", "state"),
+        Index("ix_match_cve", "cve_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_id: Mapped[str] = mapped_column(String(320), nullable=False)
+    environment_id: Mapped[int] = mapped_column(ForeignKey("environments.id", ondelete="CASCADE"), index=True)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("environment_assets.id", ondelete="CASCADE"), index=True)
+    cve_id: Mapped[str] = mapped_column(ForeignKey("vulnerabilities.cve_id", ondelete="CASCADE"))
+
+    state: Mapped[str] = mapped_column(String(24))  # affected|possibly_affected|not_affected
+    method: Mapped[str] = mapped_column(String(32))
+    confidence: Mapped[str] = mapped_column(String(16), default="medium")
+    evidence: Mapped[str | None] = mapped_column(Text)
+    exposure: Mapped[int] = mapped_column(Integer, default=0)
+    matched_at: Mapped[datetime] = mapped_column(TZ, default=utcnow)
