@@ -356,6 +356,15 @@ def recompute_vulnerability(session: Session, cve_id: str, now: datetime | None 
     for tech_id, _why in heuristic_techniques(vuln, internet_facing):
         techniques.setdefault(tech_id, "heuristic")
     vuln.techniques = [{"id": k, "method": v} for k, v in sorted(techniques.items())]
+
+    # A CVE whose products or KEV status just changed must not leave a stale
+    # verdict sitting in somebody's environment. Imported here rather than at
+    # module scope because the repository imports this module's models, and the
+    # global relevance score above is deliberately untouched by any of it.
+    from app.api.deps import current_owner
+    from app.services.rampart import repository as rampart
+
+    rampart.recompute_cve(session, current_owner(), cve_id)
     return vuln
 
 
