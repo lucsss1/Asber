@@ -205,11 +205,55 @@ column).
 one** — on a deployed database it would appear to succeed while leaving the
 schema stale. Deployments use Alembic.
 
-Adopting migrations on a database built by the old `create_all` path:
+The scheduler also calls `create_schema()` when it starts. That is convenient
+locally and misleading: a new table appears on a running instance **without the
+migration ever being applied**, so a broken revision will not announce itself by
+failing to boot. Verify a migration against a database Alembic actually built:
+
+```bash
+# scratch database, migrations only, both directions
+docker compose exec db psql -U asber -d postgres -c "CREATE DATABASE migration_probe"
+docker compose run --rm --no-deps -e DATABASE_URL=postgresql+psycopg://asber:asber@db:5432/migration_probe   backend sh -c "alembic upgrade head && alembic downgrade -1 && alembic upgrade head"
+docker compose exec db psql -U asber -d postgres -c "DROP DATABASE migration_probe"
+```
+
+Adopting migrations on a database built by the old `create_all` path — which is
+the state any instance predating the baseline is in, including one where
+`alembic_version` does not exist at all:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec backend alembic stamp head
 ```
+
+Stamp only after confirming the schema really matches. Build a reference
+database from the migrations as above and compare the two table by table; if
+they differ, stamping hides a real drift instead of resolving it.
+
+## Rampart: the environment inventory
+
+Rampart lets the operator register what they run. It is the only feature that
+stores data about the deployment's own network, so it carries two configuration
+requirements that nothing else does.
+
+**`AUTH_ADMIN_EMAILS` must be set, and must name exactly one account.**
+
+- Unset means *nobody* reaches the inventory — the page 404s and the API returns
+  403, including for accounts the rest of the dashboard treats as admins. That
+  is deliberate: an attack-surface map must not become readable because a
+  variable was forgotten.
+- More than one account is not yet safe. The API cannot distinguish callers, so
+  every request resolves to the same owner; see "Prerequisite: identity
+  propagation" in SECURITY.md. Naming two people gives them the *same*
+  environment, not one each.
+
+**`RAMPART_OWNER`** (default `local`) is the identity written to `owner_id`. It
+only needs changing if you intend to migrate the rows to a real identity later;
+otherwise leave it.
+
+**Backups now contain the inventory.** `scripts/backup.sh` dumps the whole
+database, which from this feature onwards includes a description of your
+network. Store the dumps accordingly — the threat data in them is public, this
+is not.
 
 ## Updating
 

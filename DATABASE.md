@@ -134,6 +134,61 @@ seen). Relationships are replaced atomically on each import.
 - **`nvd_cache`** — raw NVD payload per CVE with `fetched_at` and a `found` flag,
   so unknown CVEs are not re-queried either.
 
+## Rampart — the owner's environment
+
+Three tables describing what the operator actually runs, and how the corpus
+meets it. Every one carries `owner_id` (NOT NULL, indexed) from its first
+migration.
+
+- **`environments`** — a named set of assets belonging to one owner.
+  `UNIQUE(owner_id, name)`. `kind` is `inventory` today; the roadmap's alerting
+  watchlists are meant to be a second kind on this table rather than a parallel
+  one, so alerts can hang off `environment_id`.
+- **`environment_assets`** — one piece of software or firmware. The asset is the
+  *software*: matching compares `vendor`, `product` and `version`, so
+  `FortiOS 7.2.8` yields a verdict where `FortiGate 100F` cannot.
+  `hardware_model` is recorded because it is how you find the thing in a rack,
+  and is never read by the matcher. `catalogued` records whether vendor and
+  product were picked from the vocabulary in `affected_products` or typed by
+  hand; free text is allowed and shown as *unmatched*.
+- **`environment_matches`** — one row per (asset, CVE). `state` is `affected`,
+  `possibly_affected` or `not_affected`; `method`, `confidence` and `evidence`
+  follow the `entity_links` convention, with `evidence` holding the sentence
+  shown in the UI. `UNIQUE(asset_id, cve_id)`.
+
+`not_affected` rows are **stored, not discarded**. "We checked, and the version
+you run is outside the affected range" is an answer worth having, and dropping
+it would make the absence of a CVE indistinguishable from never having looked.
+
+`exposure` is the stored Environment-exposure factor (40 / 15 / 0 by state). It
+mirrors `vulnerabilities.relevance_score`: written when the match is computed,
+never per request, so the threat table can order by it. The global relevance
+score is shared by every view and is deliberately untouched by Rampart.
+
+Matches are rebuilt from two places, both in
+`services/rampart/repository.py`: `recompute_asset` when an asset is created or
+edited, and `recompute_cve` from the end of
+`correlation.recompute_vulnerability`, so a CVE whose products or KEV status
+changed does not leave a stale verdict behind.
+
+### Why version matching is conservative
+
+`affected_products.versions` is a display string, not structured bounds. NVD's
+`versionStartIncluding` / `versionEndExcluding` fields are read at ingest
+(`services/normalize.py`) and flattened into `">= 7.0.0 < 7.2.9"`;
+`services/rampart/matching.py` parses that back. The format is ours, which is
+what makes parsing it safe.
+
+It is not safe for everything else. Of 82,488 rows measured on a live database,
+52% carry a CPE and 62% carry any version string at all, and the ones that do
+include `10.0.25398.0`, `0` and `Hh-B20211125.1046`. So the comparator refuses
+anything it cannot read as an ordered sequence of integers, and a bare version
+list is not treated as a range — a list of affected versions states no boundary,
+and inventing one would be a lie. Everything unreadable resolves to
+`possibly_affected`.
+
+---
+
 ---
 
 ## Query patterns
