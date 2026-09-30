@@ -190,3 +190,22 @@ def test_catalogue_suggests_from_collected_data(client, corpus):
 
 def test_catalogue_requires_a_real_term(client):
     assert client.get("/api/rampart/catalogue", params={"q": "f"}).status_code == 422
+
+
+def test_affected_outranks_a_higher_scoring_possible(client, corpus, session):
+    """The page answers "what reaches me", so a confirmed hit comes first.
+
+    CVE-2026-0003 scores higher globally but only possibly applies; the asset's
+    version puts it squarely inside 0001's range.
+    """
+    session.add(Vulnerability(cve_id="CVE-2026-0003", vendor="fortinet", product="fortios",
+                              relevance_score=99))
+    session.add(AffectedProduct(cve_id="CVE-2026-0003", vendor="fortinet", product="fortios",
+                                cpe="", versions="7.0.0, 7.1.0", source_key="nvd"))
+    session.query(Vulnerability).filter_by(cve_id="CVE-2026-0001").update({"relevance_score": 10})
+    session.commit()
+
+    add_asset(client)
+    ids = [i["cve_id"] for i in client.get("/api/rampart/threats").json()["items"]]
+    assert ids[0] == "CVE-2026-0001", "the affected match must lead, despite the lower score"
+    assert "CVE-2026-0003" in ids

@@ -151,6 +151,22 @@ def matched_cve_ids(session: Session, owner: str, environment_id: int,
     return list(session.scalars(stmt.distinct()))
 
 
+def exposure_by_cve(session: Session, owner: str, environment_id: int, states: list[str] | None = None):
+    """One exposure number per CVE, for ordering the environment's threat table.
+
+    A CVE can match several assets; the strongest verdict is the one that
+    should decide where the row sits.
+    """
+    stmt = select(
+        EnvironmentMatch.cve_id.label("cve_id"),
+        func.max(EnvironmentMatch.exposure).label("exposure"),
+    ).where(
+        EnvironmentMatch.owner_id == owner, EnvironmentMatch.environment_id == environment_id
+    )
+    stmt = stmt.where(EnvironmentMatch.state.in_(states or [matching.AFFECTED, matching.POSSIBLY_AFFECTED]))
+    return stmt.group_by(EnvironmentMatch.cve_id).subquery()
+
+
 def _write_matches(session: Session, owner: str, asset: EnvironmentAsset,
                    results: list[tuple[str, matching.MatchResult]]) -> int:
     now = _now()

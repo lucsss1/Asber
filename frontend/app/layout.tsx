@@ -7,6 +7,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { AccountMenu } from "@/components/AccountMenu";
 import { PopoverAnchor } from "@/components/PopoverAnchor";
 import { Palette } from "@/components/Palette";
+import { canSeeRampart } from "@/lib/rampart";
 import { auth } from "@/auth";
 import { authDisabled } from "@/lib/authz";
 
@@ -38,6 +39,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const rampart = await canSeeRampart();
 
   // The shell (sidebar + top bar) is shown to anyone who can actually use the
   // dashboard. Keying it on the session alone stripped the whole shell from the
@@ -51,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         {showShell ? (
           <div className="app">
-            <Rail>
+            <Rail rampart={rampart}>
               <SearchBox />
               {session?.user ? <AccountMenu user={session.user} /> : null}
             </Rail>

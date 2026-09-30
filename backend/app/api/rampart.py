@@ -198,6 +198,17 @@ def threats(
                        severity=severity, tag=tag, platform=platform, technique=technique,
                        min_score=min_score, sort=sort)
     stmt = stmt.where(Vulnerability.cve_id.in_(cve_ids))
+
+    if sort == "relevance":
+        # Exposure first, and only then the global score. This page answers
+        # "what reaches me", so a confirmed hit on a version actually running
+        # outranks a higher-scoring CVE that is merely plausible — otherwise
+        # the three that matched sit underneath nineteen that might not.
+        exposure = repository.exposure_by_cve(session, owner, env.id, state)
+        stmt = stmt.order_by(None).order_by(
+            exposure.c.exposure.desc(), Vulnerability.relevance_score.desc()
+        ).join(exposure, exposure.c.cve_id == Vulnerability.cve_id)
+
     result = paginate(session, stmt, page, vuln_row)
 
     # Every row carries its verdict and the sentence behind it, so the table
