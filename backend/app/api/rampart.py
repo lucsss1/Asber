@@ -14,9 +14,12 @@ them from Server Actions, server side.
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.common import Page, paginate
@@ -24,7 +27,7 @@ from app.api.deps import current_owner
 from app.api.vulnerabilities import build_query
 from app.db import get_db
 from app.models import Vulnerability
-from app.services.rampart import matching, repository
+from app.services.rampart import export as rampart_export, matching, repository
 from app.services.views import vuln_row
 
 router = APIRouter(prefix="/api/rampart", tags=["rampart"])
@@ -158,6 +161,42 @@ def delete_asset(asset_id: int, session: Session = Depends(get_db),
     if not repository.delete_asset(session, owner, asset_id):
         raise HTTPException(404, "asset not found")
     session.commit()
+
+
+@router.get("/export")
+def export_environment(format: str = "markdown", session: Session = Depends(get_db),
+                       owner: str = Depends(current_owner)):
+    """The environment and its verdicts, as a file.
+
+    Goes through the same scope layer as everything else: the rows are fetched
+    by owner before the exporter ever sees them.
+    """
+    if format not in ("json", "csv", "md", "markdown"):
+        raise HTTPException(400, "format must be json, csv or markdown")
+
+    env = repository.default_environment(session, owner)
+    assets = repository.list_assets(session, owner, env.id)
+    matches = repository.list_matches(session, owner, env.id)
+    vulns = {
+        v.cve_id: v for v in session.scalars(
+            select(Vulnerability).where(Vulnerability.cve_id.in_([m.cve_id for m in matches] or [""]))
+        )
+    }
+    session.commit()
+
+    report = rampart_export.build(env, assets, matches, vulns)
+    report["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    # Content-Disposition carries a fixed name: the environment's own name is
+    # owner-supplied text and has no business in a response header.
+    if format == "json":
+        return Response(rampart_export.to_json(report), media_type="application/json",
+                        headers={"Content-Disposition": 'attachment; filename="rampart.json"'})
+    if format == "csv":
+        return Response(rampart_export.to_csv(report), media_type="text/csv",
+                        headers={"Content-Disposition": 'attachment; filename="rampart.csv"'})
+    return Response(rampart_export.to_markdown(report), media_type="text/markdown; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="rampart.md"'})
 
 
 @router.get("/threats")

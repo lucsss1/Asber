@@ -29,9 +29,16 @@ export default async function RampartPage() {
         sub="What you run, and which of the threats Asber already tracks reach it. Nothing here is sent anywhere: the inventory stays in this deployment."
         right={
           env.assets.length ? (
-            <Link href="/rampart/threats" className="link small">
-              Threats in Rampart →
-            </Link>
+            <span className="row">
+              {/* The file describes a live environment. The page says so, and
+                  so does the export itself, in its own footer. */}
+              <a className="btn" href="/api/rampart/export?format=markdown">Markdown</a>
+              <a className="btn" href="/api/rampart/export?format=json">JSON</a>
+              <a className="btn" href="/api/rampart/export?format=csv">CSV</a>
+              <Link href="/rampart/threats" className="link small">
+                Threats in Rampart →
+              </Link>
+            </span>
           ) : null
         }
       />

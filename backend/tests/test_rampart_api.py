@@ -209,3 +209,50 @@ def test_affected_outranks_a_higher_scoring_possible(client, corpus, session):
     ids = [i["cve_id"] for i in client.get("/api/rampart/threats").json()["items"]]
     assert ids[0] == "CVE-2026-0001", "the affected match must lead, despite the lower score"
     assert "CVE-2026-0003" in ids
+
+
+# --------------------------------------------------------------------- export
+def test_export_markdown_carries_the_reasoning(client, corpus):
+    add_asset(client)
+    body = client.get("/api/rampart/export", params={"format": "markdown"}).text
+    assert "## Inventory" in body
+    assert "CVE-2026-0001" in body
+    # An export that dropped the sentence would be a list of numbers with no
+    # argument attached.
+    assert "falls inside the affected range" in body
+
+
+def test_export_csv_neutralises_formula_injection(client, corpus):
+    """The asset label is text the owner typed; a spreadsheet must not run it."""
+    add_asset(client, label="=cmd|'/c calc'!A1")
+    body = client.get("/api/rampart/export", params={"format": "csv"}).text
+    assert "=cmd" not in body.replace("'=cmd", "")   # only the quoted form survives
+    assert "'=cmd|'/c calc'!A1" in body
+
+
+def test_export_json_is_machine_readable(client, corpus):
+    add_asset(client)
+    body = client.get("/api/rampart/export", params={"format": "json"}).json()
+    assert body["assets"][0]["product"] == "fortios"
+    assert any(m["state"] == matching.AFFECTED for m in body["matches"])
+    assert body["generated_at"]
+
+
+def test_export_rejects_an_unknown_format(client):
+    assert client.get("/api/rampart/export", params={"format": "pdf"}).status_code == 400
+
+
+def test_export_filename_does_not_carry_owner_text(client, corpus):
+    add_asset(client)
+    r = client.get("/api/rampart/export", params={"format": "csv"})
+    assert r.headers["Content-Disposition"] == 'attachment; filename="rampart.csv"'
+
+
+def test_export_is_scoped_to_the_owner(client, corpus):
+    add_asset(client)
+    app.dependency_overrides[current_owner] = lambda: "someone-else"
+    try:
+        body = client.get("/api/rampart/export", params={"format": "json"}).json()
+        assert body["assets"] == [] and body["matches"] == []
+    finally:
+        app.dependency_overrides.pop(current_owner, None)
