@@ -53,6 +53,14 @@ class Settings(BaseSettings):
     # API
     cors_origins: str = "http://localhost:3000"
     api_rate_limit_per_minute: int = 240
+
+    # Rampart: who owns the environment this API serves.
+    #
+    # The API has no notion of the caller's identity — it trusts the internal
+    # network and the Next.js middleware in front of it — so every request maps
+    # to this single owner. That is precisely why a second owner must not exist
+    # until identity is propagated from the frontend; see SECURITY.md.
+    rampart_owner: str = "local"
     # Proxies allowed to set X-Forwarded-For (CIDR or plain address, comma
     # separated). Empty means "no proxy in front": the peer address is used.
     trusted_proxy_ips: str = ""

@@ -11,6 +11,12 @@ const PUBLIC = ["/login", "/api/auth"];
 /** Writes that only an admin may perform (they cost source rate-limit budget). */
 const ADMIN_ONLY = /^\/api\/sources\/[^/]+\/run$/;
 
+/** The inventory: both its pages and its API, behind a stricter rule than
+ *  ADMIN_ONLY. An environment describes what the deployment actually runs, so
+ *  an allowlisted account that is not a named owner must not reach it — not
+ *  even to read. */
+const RAMPART_ONLY = /^\/(api\/)?rampart(\/|$)/;
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
@@ -35,6 +41,13 @@ export default auth((req) => {
 
   if (ADMIN_ONLY.test(pathname) && !req.auth.user.admin) {
     return NextResponse.json({ detail: "admin privileges required" }, { status: 403 });
+  }
+
+  if (RAMPART_ONLY.test(pathname) && !req.auth.user.rampart) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ detail: "not an environment owner" }, { status: 403 });
+    }
+    return new NextResponse("Not found", { status: 404 });
   }
 
   return NextResponse.next();

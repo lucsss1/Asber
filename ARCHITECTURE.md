@@ -142,16 +142,48 @@ Nothing is hidden, and the weights are visible in the UI.
 
 ## 4. API
 
-FastAPI, read-only except for manual source triggers. Routers: dashboard /
-search / sources / settings / metrics, vulnerabilities (+ export), content
-(exploits, documents), attack. Extras: per-client rate limiting, security
-headers, CORS restricted to the dashboard origin.
+FastAPI, read-only except for manual source triggers and the Rampart
+inventory. Routers: dashboard / search / sources / settings / metrics,
+vulnerabilities (+ export), content (exploits, documents), attack, rampart.
+Extras: per-client rate limiting, security headers, CORS restricted to the
+dashboard origin — and, because that policy allows only GET and POST, the
+inventory's PATCH and DELETE are unreachable from a browser by construction.
+The frontend performs them from Server Actions, server side.
 
 Search uses PostgreSQL full-text (`websearch_to_tsquery` + GIN index) and falls
 back to `ILIKE` on SQLite, so the whole suite runs without PostgreSQL.
 
 Opening an untracked CVE triggers an **on-demand** NVD lookup (cached in
 `nvd_cache`), so any valid CVE id has a useful page.
+
+## 4b. Rampart — matching the corpus to one environment
+
+The operator registers what they run; Asber says which of the threats it
+already tracks reach it. Three layers, each with one job:
+
+- **`services/rampart/matching.py`** — pure functions. No session, no network,
+  no clock; they take plain values and return a verdict with its evidence. This
+  is what makes the rules testable from fixtures, and it is where the governing
+  decision lives: doubt resolves downwards. `affected` is claimed only when a
+  version was parsed *and* compared successfully against a bound that was also
+  parsed. Anything else is `possibly_affected`. Saying "you are safe" because a
+  version string could not be read is the one failure this layer must not have.
+- **`services/rampart/repository.py`** — every query that touches the Rampart
+  tables, and the only place they are built. Each function takes `owner` first
+  and applies it. Routers never write a statement themselves.
+- **`api/deps.current_owner`** — the single place that decides whose
+  environment a request may touch. It returns a configured constant today,
+  because the API cannot tell callers apart; the seam exists so that when
+  identity propagation lands, nothing else moves. See SECURITY.md.
+
+Matching is recomputed on write, never per request: when an asset changes, and
+from the end of `correlation.recompute_vulnerability` when a CVE does. The
+result is stored with an `exposure` number so the environment's threat table can
+order by it — and it does, ahead of the global relevance score, because a
+confirmed hit on a version actually running outranks a higher-scoring CVE that
+merely might apply.
+
+---
 
 ---
 

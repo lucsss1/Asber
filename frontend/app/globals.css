@@ -960,3 +960,84 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 }
 .searchfield input[type="search"] { padding-right: 62px; }
 @media (max-width: 1000px) { .searchfield-kbd { display: none; } }
+
+/* ------------------------------------------------------------------ rampart
+   The owner's own environment. It borrows the table and panel grammar from the
+   rest of the console — this is the same instrument pointed at a smaller set,
+   not a second product bolted on. */
+.asset-table .asset-label { font-weight: 600; }
+.asset-table td { vertical-align: top; }
+
+.asset-form {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4) var(--space-4); align-items: start;
+}
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; position: relative; }
+.field-wide { grid-column: span 2; }
+.field > span {
+  font-size: 11px; font-weight: 620; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+/* The qualifier that stops somebody registering a chassis instead of firmware. */
+.field > span em {
+  font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0;
+  color: var(--ink-3); opacity: .8;
+}
+.field input, .field select { width: 100%; }
+
+.suggest {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 4px 0 0; padding: 4px;
+  list-style: none; max-height: 220px; overflow-y: auto;
+  background: var(--surface); border-radius: var(--radius-1); box-shadow: var(--shadow-float);
+}
+.suggest button {
+  display: flex; align-items: baseline; gap: var(--space-2); width: 100%;
+  padding: 5px 8px; border: 0; border-radius: var(--radius-0);
+  background: none; font: inherit; color: var(--ink-2); text-align: left; cursor: pointer;
+}
+.suggest button b { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink); }
+.suggest button span { font-size: 12px; color: var(--ink-3); }
+@media (hover: hover) and (pointer: fine) {
+  .suggest button:hover { background: var(--signal); color: var(--on-signal); }
+  .suggest button:hover b, .suggest button:hover span { color: var(--on-signal); }
+}
+
+.asset-form-foot {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  flex-wrap: wrap; padding-top: var(--space-3); border-top: 1px solid var(--rule);
+}
+.asset-error { color: var(--risk-critical); font-size: 13px; }
+
+/* The verdict. Only "affected" is warm — the system's rule holds here too. */
+.state {
+  display: inline-block; font-size: 11px; font-weight: 650;
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.state-affected { color: var(--risk-critical); }
+.state-possibly_affected { color: var(--ink-2); }
+.state-not_affected { color: var(--ink-3); }
+.state-why { font-size: 12.5px; line-height: 17px; color: var(--ink-3); margin-top: 3px; }
+
+.rampart-card {
+  display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-3) 0; margin-bottom: var(--space-5);
+  border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule);
+  font-size: 14px; color: var(--ink-2);
+}
+.rampart-card-label {
+  font-size: 11px; font-weight: 620; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.rampart-card-body { color: var(--ink); }
+.rampart-hot { color: var(--risk-critical); font-weight: 650; font-variant-numeric: tabular-nums; }
+.rampart-card .faint { margin-left: auto; }
+@media (hover: hover) and (pointer: fine) {
+  .rampart-card:hover { border-bottom-color: var(--ink-3); }
+}
+
+@media (max-width: 1000px) {
+  .asset-form { grid-template-columns: 1fr; }
+  .field-wide { grid-column: span 1; }
+  .asset-table { min-width: 620px; }
+}
