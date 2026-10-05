@@ -247,9 +247,13 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 .pulse-link { color: var(--signal-ink); white-space: nowrap; }
 
 /* One gutter for the whole instrument: the rail, the band and the content all
-   start at the same x. A centred measure read as a second, competing frame. */
+   start at the same x, and all end at the same one. A centred measure read as
+   a second, competing frame; a capped measure under full-bleed chrome was the
+   same mistake at the other end — above 1600px the content stopped while the
+   rail and the band carried on, and every pixel of the slack piled up on the
+   right. Prose is bounded on its own below, so width here costs nothing. */
 .main {
-  min-width: 0; width: 100%; max-width: 1600px;
+  min-width: 0; width: 100%;
   padding: var(--space-5) var(--space-6) var(--space-8);
   counter-reset: section;
 }
