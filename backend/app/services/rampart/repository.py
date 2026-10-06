@@ -19,6 +19,8 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     AffectedProduct,
+    Document,
+    EntityLink,
     Environment,
     EnvironmentAsset,
     EnvironmentMatch,
@@ -249,6 +251,52 @@ def recompute_cve(session: Session, owner: str, cve_id: str) -> int:
         if result is not None:
             written += _write_matches(session, owner, asset, [(cve_id, result)])
     return written
+
+
+# -------------------------------------------------------------------- reading
+def documents_for(session: Session, owner: str, environment_id: int,
+                  limit: int = 20) -> list[tuple[Document, list[str]]]:
+    """Research and news that mention a CVE this environment touches.
+
+    Phase 1 of the news story, and the whole of it for now: a document reaches
+    an environment through the CVEs it mentions, not by naming a product.
+    Extracting vendors and products from prose is a separate decision, and a
+    hard one — the corpus holds 10,302 distinct vendor/product pairs, a third
+    of them single words, including real products called "access", "core",
+    "edge" and "go".
+
+    Returns each document with the subset of the environment's CVEs it covers,
+    so the UI can say *why* an article is here rather than just listing it.
+    """
+    cve_ids = matched_cve_ids(session, owner, environment_id)
+    if not cve_ids:
+        return []
+
+    links = session.execute(
+        select(EntityLink.subject_id, EntityLink.object_id).where(
+            EntityLink.subject_type == "document",
+            EntityLink.object_type == "cve",
+            EntityLink.object_id.in_(cve_ids),
+        )
+    ).all()
+    if not links:
+        return []
+
+    by_doc: dict[int, list[str]] = {}
+    for subject_id, cve_id in links:
+        try:
+            doc_id = int(subject_id)
+        except (TypeError, ValueError):
+            continue
+        by_doc.setdefault(doc_id, []).append(cve_id)
+
+    docs = session.scalars(
+        select(Document)
+        .where(Document.id.in_(by_doc))
+        .order_by(Document.published_at.desc().nullslast())
+        .limit(limit)
+    ).all()
+    return [(d, sorted(set(by_doc.get(d.id, [])))) for d in docs]
 
 
 # -------------------------------------------------------------------- catalogue

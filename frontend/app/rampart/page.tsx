@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { apiSafe } from "@/lib/api";
+import { apiSafe, type Doc } from "@/lib/api";
 import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
-import { Empty, PageHead, Panel } from "@/components/ui";
+import { DocList, Empty, PageHead, Panel } from "@/components/ui";
+import { Fold } from "@/components/Fold";
 import { AssetForm } from "@/components/AssetForm";
 import { AssetRows } from "@/components/AssetRows";
 
@@ -17,6 +18,13 @@ export default async function RampartPage() {
 
   const env = await apiSafe<EnvironmentView>("/api/rampart/environment");
   if (!env) return <div className="notice notice-danger">API unavailable.</div>;
+
+  // Research and news reach an environment through the CVEs they mention —
+  // nothing here reads a product name out of prose. Folded, because it is
+  // context rather than the answer the page exists to give.
+  const docs = env.assets.length
+    ? await apiSafe<{ items: Doc[] }>("/api/rampart/documents", { limit: "12" })
+    : null;
 
   const { affected, possibly_affected: possibly } = env.counts;
 
@@ -84,6 +92,18 @@ export default async function RampartPage() {
           </Empty>
         )}
       </Panel>
+
+      {docs?.items.length ? (
+        <Fold label="Written about your environment" count={docs.items.length}>
+          <Panel title="Written about your environment">
+            <p className="page-sub" style={{ marginTop: 0 }}>
+              Research and news that mention a CVE your environment touches. The tags on each are
+              your CVEs, not the article&rsquo;s whole list.
+            </p>
+            <DocList docs={docs.items} />
+          </Panel>
+        </Fold>
+      ) : null}
 
       <Panel title="Add something you run">
         <p className="page-sub" style={{ marginTop: 0 }}>

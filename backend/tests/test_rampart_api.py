@@ -12,7 +12,7 @@ from app.api.deps import current_owner
 from app.config import get_settings
 from app.main import app
 from app.db import get_db
-from app.models import AffectedProduct, EnvironmentMatch, Vulnerability
+from app.models import AffectedProduct, Document, EntityLink, EnvironmentMatch, Vulnerability
 from app.services import correlation
 from app.services.rampart import matching, repository
 
@@ -299,3 +299,68 @@ def test_either_spelling_matches_the_same_cve(client, session):
         seen.append(sorted(i["cve_id"] for i in body["items"]))
         client.delete(f"/api/rampart/assets/{r.json()['id']}")
     assert seen[0] == seen[1] == ["CVE-2026-7778"]
+
+
+# ------------------------------------------------------------------ documents
+def test_documents_reach_the_environment_through_its_cves(client, corpus, session):
+    """Phase 1 of the news story: a document arrives via the CVEs it mentions.
+
+    Nothing here reads a product name out of prose — that is a separate and
+    much harder decision.
+    """
+    doc = Document(url="https://example.test/advisory", title="FortiOS under attack",
+                   source_key="bleepingcomputer", tier=3, doc_type="news",
+                   content_hash="a" * 64, reports_exploitation=False)
+    session.add(doc)
+    session.flush()
+    session.add_all([
+        EntityLink(subject_type="document", subject_id=str(doc.id), object_type="cve",
+                   object_id="CVE-2026-0001", relation="mentions", method="regex",
+                   confidence="high", source_key="bleepingcomputer"),
+        # A CVE the environment does not touch must not drag the article in.
+        EntityLink(subject_type="document", subject_id=str(doc.id), object_type="cve",
+                   object_id="CVE-2026-9999", relation="mentions", method="regex",
+                   confidence="high", source_key="bleepingcomputer"),
+    ])
+    session.commit()
+
+    add_asset(client)
+    items = client.get("/api/rampart/documents").json()["items"]
+    assert len(items) == 1
+    assert items[0]["title"] == "FortiOS under attack"
+    # Only the environment's own CVEs are reported, not the article's whole list.
+    assert items[0]["environment_cves"] == ["CVE-2026-0001"]
+
+
+def test_documents_about_nothing_you_run_are_not_returned(client, corpus, session):
+    doc = Document(url="https://example.test/other", title="Windows news",
+                   source_key="krebs", tier=3, doc_type="news",
+                   content_hash="b" * 64, reports_exploitation=False)
+    session.add(doc)
+    session.flush()
+    session.add(EntityLink(subject_type="document", subject_id=str(doc.id), object_type="cve",
+                           object_id="CVE-2026-9999", relation="mentions", method="regex",
+                           confidence="high", source_key="krebs"))
+    session.commit()
+
+    add_asset(client)
+    assert client.get("/api/rampart/documents").json()["items"] == []
+
+
+def test_documents_are_scoped_to_the_owner(client, corpus, session):
+    doc = Document(url="https://example.test/a", title="FortiOS", source_key="krebs",
+                   tier=3, doc_type="news", content_hash="c" * 64, reports_exploitation=False)
+    session.add(doc)
+    session.flush()
+    session.add(EntityLink(subject_type="document", subject_id=str(doc.id), object_type="cve",
+                           object_id="CVE-2026-0001", relation="mentions", method="regex",
+                           confidence="high", source_key="krebs"))
+    session.commit()
+    add_asset(client)
+    assert len(client.get("/api/rampart/documents").json()["items"]) == 1
+
+    app.dependency_overrides[current_owner] = lambda: "someone-else"
+    try:
+        assert client.get("/api/rampart/documents").json()["items"] == []
+    finally:
+        app.dependency_overrides.pop(current_owner, None)

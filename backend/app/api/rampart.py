@@ -28,7 +28,7 @@ from app.api.vulnerabilities import build_query
 from app.db import get_db
 from app.models import Vulnerability
 from app.services.rampart import export as rampart_export, matching, repository
-from app.services.views import vuln_row
+from app.services.views import document_row, vuln_row
 
 router = APIRouter(prefix="/api/rampart", tags=["rampart"])
 
@@ -174,6 +174,25 @@ def delete_asset(asset_id: int, session: Session = Depends(get_db),
     if not repository.delete_asset(session, owner, asset_id):
         raise HTTPException(404, "asset not found")
     session.commit()
+
+
+@router.get("/documents")
+def documents(session: Session = Depends(get_db), owner: str = Depends(current_owner),
+              limit: int = Query(20, ge=1, le=50)):
+    """What is being written about the CVEs this environment touches.
+
+    Each entry carries the environment's own CVEs that the document mentions,
+    so the reader can see why it is here instead of taking the list on trust.
+    """
+    env = repository.default_environment(session, owner)
+    rows = repository.documents_for(session, owner, env.id, limit)
+    session.commit()
+    return {
+        "items": [
+            {**document_row(d, cves=cves), "environment_cves": cves}
+            for d, cves in rows
+        ]
+    }
 
 
 @router.get("/export")
