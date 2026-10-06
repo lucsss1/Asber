@@ -1045,3 +1045,46 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   .field-wide { grid-column: span 1; }
   .asset-table { min-width: 620px; }
 }
+
+/* ------------------------------------------------- editing an asset in place
+   The row is one grid cell wide so the form can open underneath it without
+   fighting the table's columns, and the columns are drawn by hand to keep the
+   header alignment the table header still provides. */
+.asset-list { border-top: 1px solid var(--rule-strong); }
+.asset-row { border-bottom: 1px solid var(--rule); }
+/* The header shares the row's grid rather than a table's column widths; the
+   two cannot both decide where a column starts. */
+.asset-head {
+  background: var(--surface-2); border-bottom: 1px solid var(--rule);
+  padding-top: 9px; padding-bottom: 9px;
+  font-size: 11px; font-weight: 620; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.asset-head span:last-child { text-align: right; }
+.asset-row-main {
+  display: grid; grid-template-columns: 1fr 220px 130px 140px 210px;
+  gap: var(--space-4); align-items: start;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
+}
+.asset-col { min-width: 0; }
+.asset-col-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 4px; flex-wrap: wrap;
+}
+.asset-col-actions .btn { padding: 3px 8px; font-size: 12.5px; }
+/* The destructive step is the only warm thing in this table. */
+.asset-remove { color: var(--risk-critical); }
+
+.asset-edit { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 240ms var(--ease-out); }
+.asset-edit > div { overflow: hidden; }
+.asset-edit[data-open] { grid-template-rows: 1fr; }
+.asset-edit-body {
+  padding: var(--space-4) var(--space-4) var(--space-5) var(--space-2);
+  background: var(--surface-2);
+}
+
+@media (prefers-reduced-motion: reduce) { .asset-edit { transition: none; } }
+
+@media (max-width: 1000px) {
+  .asset-row-main { grid-template-columns: 1fr; gap: var(--space-2); }
+  .asset-col-actions { justify-content: flex-start; }
+}

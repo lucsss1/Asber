@@ -2,14 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { apiSafe } from "@/lib/api";
-import { CATEGORIES, canSeeRampart, type EnvironmentView } from "@/lib/rampart";
+import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
 import { Empty, PageHead, Panel } from "@/components/ui";
 import { AssetForm } from "@/components/AssetForm";
-import { deleteAsset } from "./actions";
+import { AssetRows } from "@/components/AssetRows";
 
 export const dynamic = "force-dynamic";
-
-const CATEGORY_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.value, c.label]));
 
 export default async function RampartPage() {
   // The middleware already refuses non-owners; this is the second lock, and it
@@ -78,52 +76,7 @@ export default async function RampartPage() {
 
       <Panel title="Your environment" flush>
         {env.assets.length ? (
-          <table className="asset-table">
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th style={{ width: 220 }}>Software</th>
-                <th style={{ width: 130 }}>Version</th>
-                <th style={{ width: 140 }}>Category</th>
-                <th style={{ width: 90 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {env.assets.map((a) => (
-                <tr key={a.id}>
-                  <td>
-                    <div className="asset-label">{a.label}</div>
-                    {a.hardware_model ? <div className="faint">{a.hardware_model}</div> : null}
-                  </td>
-                  <td>
-                    <div className="mono">{a.product}</div>
-                    <div className="faint">{a.vendor}</div>
-                  </td>
-                  <td>
-                    {a.version ? (
-                      <span className="mono">{a.version}</span>
-                    ) : (
-                      <span className="tag" title="Without a version every match stays unconfirmed">
-                        not set
-                      </span>
-                    )}
-                  </td>
-                  <td className="faint">{CATEGORY_LABEL[a.category] ?? a.category}</td>
-                  <td className="num">
-                    {!a.catalogued ? (
-                      <span className="tag" title="Typed by hand — matching falls back to the name">
-                        unmatched
-                      </span>
-                    ) : null}
-                    <form action={deleteAsset} style={{ display: "inline" }}>
-                      <input type="hidden" name="id" value={a.id} />
-                      <button type="submit" className="btn btn-ghost small">Remove</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <AssetRows assets={env.assets} />
         ) : (
           <Empty title="Nothing registered yet">
             Add the software and firmware you actually run. Asber already tracks the threats; this is
