@@ -132,6 +132,19 @@ def catalogue(q: str = Query(min_length=2, max_length=80),
     return {"items": repository.catalogue(session, q)}
 
 
+@router.get("/versions")
+def versions(product: str = Query(min_length=2, max_length=300),
+             vendor: str = Query("", max_length=200),
+             session: Session = Depends(get_db),
+             owner: str = Depends(current_owner)):
+    """Versions advisories have named for a product, to fill the version field.
+
+    Reads nothing owned, but stays on this router so the whole Rampart surface
+    sits behind one access rule.
+    """
+    return {"items": repository.versions_for(session, vendor, product)}
+
+
 @router.post("/assets", status_code=201)
 def create_asset(payload: AssetIn, session: Session = Depends(get_db),
                  owner: str = Depends(current_owner)):

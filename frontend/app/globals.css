@@ -972,11 +972,18 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .asset-table .asset-label { font-weight: 600; }
 .asset-table td { vertical-align: top; }
 
+/* The form obeys the same rule as every panel: a line, not a box.
+   These fields used to inherit the compact filter-bar input — an outlined box
+   on its own surface — and six of them stretched across a wide screen read as
+   a wall of containers with nothing of this system in them. A field is now a
+   label, a value and the rule it sits on, which is how the rest of the console
+   draws every division it has. */
 .asset-form {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: var(--space-4) var(--space-4); align-items: start;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-5) var(--space-5); align-items: end;
+  max-width: 1020px;
 }
-.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; position: relative; }
+.field { display: flex; flex-direction: column; gap: 3px; min-width: 0; position: relative; }
 .field-wide { grid-column: span 2; }
 .field > span {
   font-size: 11px; font-weight: 620; color: var(--ink-3);
@@ -987,10 +994,39 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0;
   color: var(--ink-3); opacity: .8;
 }
-.field input, .field select { width: 100%; }
+
+.field input,
+.field select {
+  width: 100%; padding: 5px 0; border: 0; border-radius: 0;
+  border-bottom: 1px solid var(--rule-strong);
+  background: none; color: var(--ink);
+  font-family: inherit; font-size: 15px; line-height: 22px;
+  transition: border-color 120ms ease;
+}
+/* Mono where the value is data you would copy or compare — the same rule that
+   governs a CVE id or a CVSS vector everywhere else. */
+.field-data input { font-family: var(--mono); font-size: 14px; }
+
+.field input::placeholder { color: var(--ink-3); opacity: .65; }
+.field input:focus, .field select:focus {
+  outline: none; border-bottom-color: var(--signal); border-bottom-width: 2px;
+  padding-bottom: 4px;   /* the thicker rule must not move the text */
+}
+@media (hover: hover) and (pointer: fine) {
+  .field input:hover:not(:focus), .field select:hover:not(:focus) { border-bottom-color: var(--ink-3); }
+}
+.field select {
+  appearance: none; cursor: pointer; padding-right: 18px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 7px center, right 2px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--ink);
+}
 
 .suggest {
-  position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 4px 0 0; padding: 4px;
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 5px 0 0; padding: 4px;
   list-style: none; max-height: 220px; overflow-y: auto;
   background: var(--surface); border-radius: var(--radius-1); box-shadow: var(--shadow-float);
 }
@@ -1007,9 +1043,10 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 }
 
 .asset-form-foot {
-  grid-column: 1 / -1;
+  grid-column: 1 / -1; max-width: 1020px;
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
-  flex-wrap: wrap; padding-top: var(--space-3); border-top: 1px solid var(--rule);
+  flex-wrap: wrap; margin-top: var(--space-2); padding-top: var(--space-4);
+  border-top: 1px solid var(--rule);
 }
 .asset-error { color: var(--risk-critical); font-size: 13px; }
 
@@ -1088,3 +1125,9 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   .asset-row-main { grid-template-columns: 1fr; gap: var(--space-2); }
   .asset-col-actions { justify-content: flex-start; }
 }
+
+/* The version list is long and uniform, so it reads as a column of figures
+   rather than a menu of labels. */
+.suggest-versions { max-height: 260px; }
+.suggest-versions button { justify-content: flex-start; }
+.suggest-versions button b { font-size: 13.5px; }

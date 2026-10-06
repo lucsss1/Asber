@@ -252,6 +252,36 @@ def recompute_cve(session: Session, owner: str, cve_id: str) -> int:
 
 
 # -------------------------------------------------------------------- catalogue
+def versions_for(session: Session, vendor: str, product: str, limit: int = 60) -> list[str]:
+    """Versions advisories have named for one product, newest first.
+
+    Not a release catalogue — Asber has no such thing. These are the versions
+    that appear in collected advisories, which in practice means release
+    numbers from CNA listings and the fixed-in builds from CPE ranges. For
+    somebody saying what they run, that is usually the list they want; for
+    anything else the field stays free text.
+    """
+    p = matching.normalise(product)
+    if not p:
+        return []
+    stmt = select(AffectedProduct.versions).where(
+        func.lower(AffectedProduct.product) == p, AffectedProduct.versions.is_not(None)
+    )
+    v = matching.normalise(vendor)
+    if v and v != "n/a":
+        stmt = stmt.where(func.lower(AffectedProduct.vendor).in_([v, "n/a", ""]))
+
+    found: set[str] = set()
+    for raw in session.scalars(stmt):
+        found.update(matching.version_tokens(raw))
+
+    try:
+        ordered = sorted(found, key=matching.version_sort_key, reverse=True)
+    except ValueError:  # a token that slipped past the pattern
+        ordered = sorted(found, reverse=True)
+    return ordered[:limit]
+
+
 def catalogue(session: Session, term: str, limit: int = 20) -> list[dict]:
     """Vendor/product pairs drawn from data already collected.
 

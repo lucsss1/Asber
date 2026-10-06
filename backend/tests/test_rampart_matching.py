@@ -23,6 +23,8 @@ from app.services.rampart.matching import (
     normalise,
     parse_range,
     version_in_range,
+    version_sort_key,
+    version_tokens,
 )
 
 
@@ -195,3 +197,30 @@ def test_filler_vendor_does_not_block_a_product_match():
     result = match_asset(asset(vendor="fortinet", product="fortios", version="7.2.8"),
                          [product(vendor="n/a", name="fortios", versions=">= 7.0.0 < 7.2.9")])
     assert result is not None and result.state == AFFECTED
+
+
+# --------------------------------------------------------- version suggestions
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("7.4.0, 7.2.0, 7.0.0, 6.4.0", ["7.4.0", "7.2.0", "7.0.0", "6.4.0"]),
+        ("< 10.0.26100.2314", ["10.0.26100.2314"]),
+        (">= 7.0.0 < 7.2.9", ["7.0.0", "7.2.9"]),   # the two-bound form is the common one
+        ("10.0.26100.0", ["10.0.26100.0"]),
+    ],
+)
+def test_version_tokens_reads_every_shape_the_column_holds(raw, expected):
+    assert version_tokens(raw) == expected
+
+
+@pytest.mark.parametrize("raw", [None, "", "(Server Core installation)", "Hh-B20211125.1046", "0", "n/a"])
+def test_version_tokens_refuses_what_is_not_a_version(raw):
+    """The same column carries build labels, prose and junk."""
+    assert version_tokens(raw) == []
+
+
+def test_versions_sort_numerically_not_lexically():
+    """Lexical order puts .33158 before .3981, which is wrong by three orders."""
+    got = sorted(["10.0.26100.3981", "10.0.26100.33158", "10.0.26100.2314"],
+                 key=version_sort_key, reverse=True)
+    assert got == ["10.0.26100.33158", "10.0.26100.3981", "10.0.26100.2314"]

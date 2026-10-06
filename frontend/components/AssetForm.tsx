@@ -32,6 +32,9 @@ export function AssetForm({ asset, onDone }: { asset?: Asset; onDone?: () => voi
   const [product, setProduct] = useState(asset?.product ?? "");
   const [catalogued, setCatalogued] = useState(asset?.catalogued ?? false);
   const [hits, setHits] = useState<Suggestion[]>([]);
+  const [version, setVersion] = useState(asset?.version ?? "");
+  const [versions, setVersions] = useState<string[]>([]);
+  const [showVersions, setShowVersions] = useState(false);
   const form = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -41,6 +44,8 @@ export function AssetForm({ asset, onDone }: { asset?: Asset; onDone?: () => voi
       setProduct("");
       setCatalogued(false);
       setHits([]);
+      setVersion("");
+      setVersions([]);
       onDone?.();
     }
   }, [state, editing, onDone]);
@@ -66,11 +71,39 @@ export function AssetForm({ asset, onDone }: { asset?: Asset; onDone?: () => voi
     };
   }, [product, catalogued]);
 
+  // Once a product is named, offer the versions advisories have mentioned for
+  // it. This is not a release catalogue — Asber has no such thing — so the list
+  // is a shortcut, never a constraint: the field stays free text for the very
+  // common case of running something no advisory has named yet.
+  useEffect(() => {
+    const p = product.trim();
+    if (p.length < 2) {
+      setVersions([]);
+      return;
+    }
+    const abort = new AbortController();
+    const timer = setTimeout(() => {
+      const q = new URLSearchParams({ product: p, vendor: vendor.trim() });
+      fetch(`/api/rampart/versions?${q}`, { signal: abort.signal })
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((d) => setVersions(d.items ?? []))
+        .catch(() => undefined);
+    }, 220);
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
+  }, [product, vendor]);
+
+  const typed = version.trim().toLowerCase();
+  const versionHits = typed ? versions.filter((v) => v.startsWith(typed)) : versions;
+
   const pick = (s: Suggestion) => {
     setVendor(s.vendor);
     setProduct(s.product);
     setCatalogued(true);
     setHits([]);
+    setVersion("");
   };
 
   return (
@@ -94,7 +127,7 @@ export function AssetForm({ asset, onDone }: { asset?: Asset; onDone?: () => voi
         </select>
       </label>
 
-      <label className="field field-wide">
+      <label className="field field-wide field-data">
         <span>Product</span>
         <input
           name="product"
@@ -122,18 +155,38 @@ export function AssetForm({ asset, onDone }: { asset?: Asset; onDone?: () => voi
         ) : null}
       </label>
 
-      <label className="field">
+      <label className="field field-data">
         <span>Vendor</span>
         <input name="vendor" value={vendor} onChange={(e) => setVendor(e.target.value)}
                maxLength={200} required autoComplete="off" placeholder="fortinet" />
       </label>
 
-      <label className="field">
+      <label className="field field-data">
         <span>
-          Version <em>the software, not the box</em>
+          Version{" "}
+          <em>{versions.length ? `${versions.length} seen in advisories` : "the software, not the box"}</em>
         </span>
-        <input name="version" defaultValue={asset?.version ?? ""} maxLength={64}
-               autoComplete="off" placeholder="7.2.8" />
+        <input
+          name="version"
+          value={version}
+          onChange={(e) => setVersion(e.target.value)}
+          onFocus={() => setShowVersions(true)}
+          onBlur={() => setTimeout(() => setShowVersions(false), 120)}
+          maxLength={64}
+          autoComplete="off"
+          placeholder="7.2.8"
+        />
+        {showVersions && versionHits.length ? (
+          <ul className="suggest suggest-versions">
+            {versionHits.slice(0, 40).map((v) => (
+              <li key={v}>
+                <button type="button" onMouseDown={() => { setVersion(v); setShowVersions(false); }}>
+                  <b>{v}</b>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </label>
 
       <label className="field">

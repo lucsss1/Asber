@@ -154,6 +154,42 @@ def version_in_range(version: str | None, rng: Range | None) -> str:
     return IN
 
 
+#: A version-looking run: digits separated by dots, at least two parts.
+#: Deliberately strict — the same column also carries "(Server Core
+#: installation)", "n/a" and "Hh-B20211125.1046", none of which is a version.
+_VERSION_TOKEN = re.compile(r"(?<![0-9A-Za-z.])[0-9]+(?:[.][0-9]+)+(?![0-9A-Za-z.])")
+
+
+def version_tokens(raw: str | None) -> list[str]:
+    """Every concrete version named in one ``affected_products.versions`` value.
+
+    The column holds several shapes: a CNA writes a list of affected releases
+    (``"7.4.0, 7.2.0, 7.0.0"``), a CPE match writes the bounds this project
+    generates (``"&gt;= 7.0.0 &lt; 7.2.9"``, ``"&lt; 10.0.26100.2314"``). All of them
+    name real versions — a bound is the build an advisory was fixed in — so all
+    are worth offering to somebody trying to say what they run.
+
+    Scanned rather than split, because the separators are not consistent: an
+    earlier version of this split on commas and silently returned nothing for
+    the two-bound form, which is the most common one.
+
+    What this is *not* is a release catalogue. Asber has no such thing; it has
+    the versions advisories happened to mention, and the UI says so.
+    """
+    if not raw:
+        return []
+    out: list[str] = []
+    for token in _VERSION_TOKEN.findall(raw):
+        if token not in out:
+            out.append(token)
+    return out
+
+
+def version_sort_key(version: str) -> tuple:
+    """Order versions numerically. Lexical order puts .33158 before .3981."""
+    return tuple(int(p) for p in version.split("."))
+
+
 def _same_product(asset, product) -> bool:
     a_vendor, a_product = normalise(asset.vendor), normalise(asset.product)
     p_vendor, p_product = normalise(product.vendor), normalise(product.product)
