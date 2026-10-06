@@ -6,7 +6,8 @@ a Next.js App Router frontend with server components. It is **not** a news
 aggregator — every view exists to answer an operational question.
 
 Read `ARCHITECTURE.md`, `DATABASE.md` and `SECURITY.md` before changing
-ingestion, the schema, or anything touching authentication.
+ingestion, the schema, or anything touching authentication. `ROADMAP.md` says
+what each unbuilt phase actually requires, verified against the code.
 
 ---
 
@@ -46,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **213 backend**, **8 frontend**):
+Tests (currently **229 backend**, **8 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -151,12 +152,15 @@ The owner's technology inventory, matched against the corpus.
 
 ## Open work
 
-- **Rampart Phase 1 gap:** documents linked through `entity_links` to the
-  environment's CVEs are specified but **not implemented** — neither
-  `/api/rampart/*` nor the pages return them. This is a miss, not a deferral.
-- **Phase 2** (vendor/product extraction from documents) is not approved. The
-  ATT&CK ambiguous-name policy does not scale to it: 10,302 distinct
-  vendor/product pairs against ~800 ATT&CK objects, 35% single-word, with real
-  products named `access`, `core`, `edge`, `go`, `office` and `word`. The
-  proposed reframing is to search only for products the owner registered.
-- Phase 3 (alerts, watchlists) should build on the `environments` table.
+See `ROADMAP.md` for the full picture. The decisions that are still the user's
+to make:
+
+- **Rampart Phase 2** (vendor/product extraction from documents) is not
+  approved. The ATT&CK ambiguous-name policy does not scale to it: 10,302
+  distinct vendor/product pairs against ~800 ATT&CK objects, 35% single-word,
+  with real products named `access`, `core`, `edge`, `go`, `office` and `word`.
+  The proposed reframing is to search only for products the owner registered.
+- **The threat view does not group by asset.** With three assets the
+  environment already carries over a thousand matches, and the page lists CVEs
+  rather than "what is wrong with each thing I have". This gets unreadable
+  before it gets wrong.
