@@ -256,3 +256,46 @@ def test_export_is_scoped_to_the_owner(client, corpus):
         assert body["assets"] == [] and body["matches"] == []
     finally:
         app.dependency_overrides.pop(current_owner, None)
+
+
+def test_catalogue_folds_the_two_spellings_of_one_product(client, session):
+    """A single NVD record is read twice and yields two spellings.
+
+    Its configurations block gives the CPE vocabulary (google/chrome) and its
+    affected block gives the CNA's own (Google/Chrome). The matcher normalises
+    both sides, so they find the same vulnerabilities — offering both would
+    imply a difference that does not exist.
+    """
+    session.add(Vulnerability(cve_id="CVE-2026-7777", vendor="google", product="chrome"))
+    session.add_all([
+        AffectedProduct(cve_id="CVE-2026-7777", vendor="google", product="chrome",
+                        cpe="cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*",
+                        versions="< 153.0.0.0", source_key="nvd"),
+        AffectedProduct(cve_id="CVE-2026-7777", vendor="Google", product="Chrome",
+                        cpe="", versions="152.0.0.0", source_key="nvd"),
+    ])
+    session.commit()
+
+    items = client.get("/api/rampart/catalogue", params={"q": "chrome"}).json()["items"]
+    chrome = [i for i in items if i["product"].lower() == "chrome"]
+    assert len(chrome) == 1, f"expected one entry, got {chrome}"
+    assert chrome[0] == {"vendor": "Google", "product": "Chrome"}, "the readable spelling wins"
+
+
+def test_either_spelling_matches_the_same_cve(client, session):
+    """Folding is a display decision; matching was already case-insensitive."""
+    session.add(Vulnerability(cve_id="CVE-2026-7778", vendor="google", product="chrome"))
+    session.add(AffectedProduct(cve_id="CVE-2026-7778", vendor="google", product="chrome",
+                                cpe="cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*",
+                                versions=">= 150.0.0.0 < 153.0.0.0", source_key="nvd"))
+    session.commit()
+
+    seen = []
+    for vendor, product in (("Google", "Chrome"), ("google", "chrome")):
+        r = add_asset(client, label=f"{vendor} test", category="application",
+                      vendor=vendor, product=product, version="152.0.0.0")
+        assert r.status_code == 201
+        body = client.get("/api/rampart/threats").json()
+        seen.append(sorted(i["cve_id"] for i in body["items"]))
+        client.delete(f"/api/rampart/assets/{r.json()['id']}")
+    assert seen[0] == seen[1] == ["CVE-2026-7778"]

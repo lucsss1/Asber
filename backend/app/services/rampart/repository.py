@@ -288,18 +288,35 @@ def catalogue(session: Session, term: str, limit: int = 20) -> list[dict]:
     Free text stays possible — the inventory should never be blocked by a gap
     in NVD's vocabulary — but anything picked from here is marked as catalogued
     and matches far better.
+
+    Folded case-insensitively, because the corpus carries the same product
+    under two spellings and they are not a choice. A single NVD record is read
+    twice: its ``configurations`` block yields the CPE vocabulary ("google",
+    "chrome") and its ``affected`` block yields the CNA's own ("Google",
+    "Chrome"). For Chrome that is 470 rows against 471, covering 467 of the
+    same CVEs. The matcher normalises both sides before comparing, so picking
+    either one finds exactly the same vulnerabilities — offering both implied a
+    difference that does not exist.
+
+    The displayed spelling is the lowest ordinal, which prefers "Chrome" over
+    "chrome" and "windows server 2019" over "windows_server_2019": in both
+    cases the more readable one.
     """
     like = f"%{term.strip().lower()}%"
     rows = session.execute(
-        select(AffectedProduct.vendor, AffectedProduct.product)
+        select(
+            func.min(AffectedProduct.vendor).label("vendor"),
+            func.min(AffectedProduct.product).label("product"),
+            func.count().label("rows"),
+        )
         .where(
             func.lower(AffectedProduct.product).like(like),
             AffectedProduct.product != "",
             AffectedProduct.product != "n/a",
             AffectedProduct.vendor != "n/a",
         )
-        .group_by(AffectedProduct.vendor, AffectedProduct.product)
+        .group_by(func.lower(AffectedProduct.vendor), func.lower(AffectedProduct.product))
         .order_by(func.count().desc())
         .limit(limit)
     ).all()
-    return [{"vendor": v, "product": p} for v, p in rows]
+    return [{"vendor": v, "product": p} for v, p, _ in rows]
