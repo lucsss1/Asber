@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 
 import { CATEGORIES, type Asset } from "@/lib/rampart";
+import { Picker } from "@/components/Picker";
 import { createAsset, updateAsset, type ActionResult } from "@/app/rampart/actions";
 
 type Suggestion = { vendor: string; product: string };
@@ -118,14 +119,10 @@ export function AssetForm({ asset, onDone }: { asset?: Asset; onDone?: () => voi
                placeholder="Edge firewall, main site" />
       </label>
 
-      <label className="field">
+      <div className="field">
         <span>Category</span>
-        <select name="category" defaultValue={asset?.category ?? "firewall"}>
-          {CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </select>
-      </label>
+        <Picker name="category" options={CATEGORIES} defaultValue={asset?.category ?? "firewall"} />
+      </div>
 
       <label className="field field-wide field-data">
         <span>Product</span>
