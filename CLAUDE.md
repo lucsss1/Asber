@@ -155,11 +155,10 @@ The owner's technology inventory, matched against the corpus.
 See `ROADMAP.md` for the full picture. The decisions that are still the user's
 to make:
 
-- **Rampart Phase 2** (vendor/product extraction from documents) is not
-  approved. The ATT&CK ambiguous-name policy does not scale to it: 10,302
-  distinct vendor/product pairs against ~800 ATT&CK objects, 35% single-word,
-  with real products named `access`, `core`, `edge`, `go`, `office` and `word`.
-  The proposed reframing is to search only for products the owner registered.
+- **Rampart Phase 2** (vendor/product extraction from documents) was measured
+  and dropped: on a 447-document corpus it would have added **one** document
+  that was not already arriving through a CVE link. Security writing names the
+  CVE, so the existing link already carries the signal. See `ROADMAP.md`.
 - **The threat view does not group by asset.** With three assets the
   environment already carries over a thousand matches, and the page lists CVEs
   rather than "what is wrong with each thing I have". This gets unreadable

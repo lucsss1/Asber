@@ -65,21 +65,40 @@ Two pages are waiting on these, and each already states what it will contain:
 - **`/detection`** — Sigma and YARA rules mapped to ATT&CK and correlated with CVEs
 - **`/iocs`** — hashes, domains, IPs and URLs, plus IOC → malware family → ATT&CK software
 
-### Phase 2 of Rampart, separately
+### Phase 2 of Rampart — measured, and not worth building
 
 Vendor and product extraction from document text, so news reaches an
-environment by naming a product rather than only through a CVE. **Not
-approved**, and the reason is measured: the corpus holds 10,302 distinct
-vendor/product pairs against roughly 800 ATT&CK objects, 35% of them single
-words, with real products named `access`, `core`, `edge`, `go`, `office` and
-`word`. The hand-curated ambiguous-name policy in `services/extract.py` works
-at 800 names and does not scale to 10,302.
+environment by naming a product rather than only through a CVE.
 
-The proposed reframing is to invert it: search only for the products the owner
-registered, which turns a 10,302-name dictionary into a 20-name one and makes
-the ambiguity policy both curatable and explainable to the owner. The cost is
-that it finds nothing you did not register — which is the Rampart promise
-anyway.
+**The measurement says do not build it.** Taken on a 447-document corpus
+against an inventory of FortiOS, Chrome and Windows Server:
+
+| | |
+|---|---|
+| Documents already reaching the environment through CVE links | 147 |
+| Documents mentioning "chrome" anywhere in their text | 109 |
+| …of those, already arriving via a CVE link | 108 |
+| **Documents product extraction would add** | **1** |
+
+Security writing names the CVE. An article about a product almost always
+cites the identifiers, so the link that already exists carries the signal, and
+extraction would duplicate it.
+
+The cost on the other side is real. A global dictionary would have to carry
+10,302 distinct vendor/product pairs against roughly 800 ATT&CK objects, 35% of
+them single words, with products genuinely named `access`, `core`, `edge`,
+`go`, `office` and `word`. On the same corpus `access` matches 24 documents,
+`one` 20 and `office` 9 — almost all of them the English word. The hand-curated
+ambiguous-name policy in `services/extract.py` works at 800 names and does not
+scale.
+
+If this is ever revisited, the shape to build is the inverted one: search only
+for the products the owner registered, which turns a 10,302-name dictionary
+into a 20-name one. But the number to beat first is that single document.
+
+**The lesson that actually mattered here:** the corpus was the bottleneck, not
+the matching. Before the Phase 2 feeds were enabled, two documents reached the
+environment. Enabling six RSS sources that needed no code took that to 147.
 
 ---
 
