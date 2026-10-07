@@ -56,6 +56,21 @@ check "forged session cookie" 401 \
 check "traversal /_next/../api/health" 401 "$(code --path-as-is "$BASE/_next/../api/health")"
 
 echo
+echo "A01 — Rampart: the inventory is not reachable without a session"
+# An environment is a map of what this deployment runs. It sits behind a
+# stricter rule than the rest of the dashboard: lib/authz.isRampartOwner has no
+# fallback, so an unset AUTH_ADMIN_EMAILS denies everyone rather than promoting
+# the whole allowlist. The 403 case for a signed-in non-owner cannot be reached
+# from here without a session; frontend/lib/authz.test.ts covers it offline.
+for path in /api/rampart/environment /api/rampart/assets /api/rampart/threats /api/rampart/catalogue; do
+  check "GET $path" 401 "$(code "$BASE$path")"
+done
+check "GET /rampart redirects to sign-in" 307 "$(code "$BASE/rampart")"
+for ext in png svg ico; do
+  check "GET /api/rampart/environment.$ext" 401 "$(code "$BASE/api/rampart/environment.$ext")"
+done
+echo
+
 echo "A02 Security Misconfiguration — headers"
 headers=$($BODY -D - -o /dev/null "$BASE/login")
 for h in "strict-transport-security" "x-frame-options" "x-content-type-options" \

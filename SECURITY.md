@@ -125,11 +125,69 @@ this project is one you inherited, not one you wrote.
 | `/api/auth/*` was swallowed by the backend proxy, so sign-in could never complete | A07 | Fixed |
 | Next.js 15.5.4 carried a critical RCE advisory plus two high-severity ones | A03 | Fixed (16.3.6, audit clean) |
 | An invalid `sort` returned 200 while silently ignoring the request | A10 | Fixed (now 400) |
+| Deleting an inventory asset orphaned its matches: `ON DELETE CASCADE` is in the schema, but SQLite does not enforce foreign keys, so the rows survived under test and would have been cleaned only in Postgres | A06 | Fixed (deleted explicitly) |
+| The production database had no `alembic_version` row at all — it was built entirely by `create_schema()`, so `alembic upgrade head` would have tried to replay the baseline over an existing schema | A02 | Fixed (stamped, after verifying the schema matched a migration-built reference) |
 
 The first two were found by attacking the running stack, not by reading the
 code. Both would have shipped.
 
 ---
+
+## Rampart: the inventory
+
+An environment describes what a real network actually runs. It is the most
+sensitive thing this system stores — every other table holds public data —
+and it is treated accordingly.
+
+**It never leaves the deployment.** No ingestion worker reads it, nothing in it
+is sent to a source, and no asset name, vendor, product or version is written to
+a log. The only way it leaves is the export the owner asks for, which says in
+its own footer what it is.
+
+**One door.** Every read and write goes through
+`services/rampart/repository.py`, whose functions all take `owner` as their
+first argument and apply it. Routers never build a statement against the Rampart
+tables. The rule is mechanical rather than clever on purpose: a scoping mistake
+here is not the kind of bug you get to fix after somebody notices.
+
+**It fails closed.** `lib/authz.isRampartOwner` is deliberately *not* `isAdmin`.
+`isAdmin` falls back to the whole allowlist when `AUTH_ADMIN_EMAILS` is unset —
+a reasonable default for "may trigger an ingestion run", and the wrong one here.
+With no `AUTH_ADMIN_EMAILS`, nobody reaches the inventory, including accounts the
+rest of the dashboard treats as admins. A signed-in non-owner gets 403 from
+`/api/rampart/*` and **404** from the pages: whether this deployment keeps an
+inventory is itself worth not confirming.
+
+**Writes are server-side only.** The CORS policy allows GET and POST from the
+dashboard origin, so a browser cannot issue the inventory's PATCH or DELETE
+cross-origin at all. The frontend mutates from Server Actions, which carry
+Next's own origin check, and each action re-checks ownership: the middleware
+guards the route, but an action is reachable by its own id, so "the page was
+protected" is not the same as "this call was".
+
+**Exports are escaped twice.** Markdown special characters, and the spreadsheet
+formula prefixes — both reusing the controls in `services/export.py` rather than
+a second copy. These matter more here than in the per-CVE export, because the
+cells contain text the owner typed: an asset labelled `=cmd|'/c calc'!A1` must
+not execute when the CSV is opened.
+
+### Prerequisite: identity propagation, before a second owner exists
+
+`api/deps.current_owner` returns a configured constant. The API has no way to
+tell one caller from another — it trusts the internal network and the Next.js
+middleware in front of it — so **every request maps to the same owner**.
+
+That is fine for one operator and unacceptable for two. Today the real access
+control for Rampart is the middleware, not the API; with a second owner, anyone
+who reached the backend directly would read the first owner's inventory, because
+the backend would have no basis on which to refuse. `owner_id` is on every table
+and every query from the first migration so that the data model is ready, but
+the *check* is not.
+
+**Before a deployment has more than one environment owner**, identity must be
+propagated from the frontend to FastAPI and `current_owner` must derive the
+owner from the request rather than from configuration. Nothing else in the
+Rampart code has to change; that function is the seam.
 
 ## Known limitations
 
@@ -148,7 +206,14 @@ code. Both would have shipped.
   statement of fact.
 - **Two schema paths.** Deployments run Alembic migrations; the test suite and
   throwaway SQLite databases still use `create_all`. The two are checked against
-  each other, but only Alembic can alter an existing table.
+  each other, but only Alembic can alter an existing table. The scheduler also
+  calls `create_schema()` at startup, which means a new table appears on a
+  running instance without the migration ever being applied — so a broken
+  migration will not show up locally. Verify migrations against a fresh
+  database, not by watching the app start. See DEPLOY.md.
+- **One Rampart owner per deployment.** The API cannot distinguish callers;
+  see "Prerequisite: identity propagation" above. `AUTH_ADMIN_EMAILS` must name
+  exactly one account until that changes.
 
 ## Reporting a problem
 

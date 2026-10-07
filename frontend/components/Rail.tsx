@@ -29,7 +29,7 @@ const RAIL: Item[] = [
   { href: "/news", label: "News" },
 ];
 
-export function Rail({ children }: { children?: React.ReactNode }) {
+export function Rail({ children, rampart }: { children?: React.ReactNode; rampart?: boolean }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
@@ -43,7 +43,7 @@ export function Rail({ children }: { children?: React.ReactNode }) {
       </Link>
 
       <nav className="rail-nav" aria-label="Sections">
-        {RAIL.map((item) => (
+        {[...RAIL, ...(rampart ? [{ href: "/rampart", label: "Rampart" }] : [])].map((item) => (
           <Link
             key={item.href}
             href={item.href}

@@ -36,6 +36,12 @@ def _cell(value) -> str:
     return "'" + text if text[:1] in FORMULA_PREFIXES else text
 
 
+#: Public name for the same control, so other exporters reuse it rather than
+#: growing a second, subtly different one. Rampart needs it more than this
+#: module does: its cells contain text the owner typed.
+cell = _cell
+
+
 def to_csv(detail: dict) -> str:
     """Flat evidence list: one row per source / exploit / event."""
     buf = io.StringIO()

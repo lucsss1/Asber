@@ -164,6 +164,42 @@ the overview shows a warning banner.
 
 ---
 
+## Rampart — your environment
+
+Asber ranks threats the same way for everybody. Whether a CVE matters to *you*
+depends on what you actually run, so Rampart lets you register it and see the
+same corpus narrowed and reordered against your inventory.
+
+Register the **software**, not the box: matching compares vendor, product and
+version, so `FortiOS 7.2.8` produces a verdict where `FortiGate 100F` cannot.
+The hardware model is recorded as a label, because it is how you find the thing
+in a rack. Vendor and product autocomplete from the vocabulary already present
+in collected data; free text is accepted and marked *unmatched*.
+
+Every match carries a state and the sentence behind it:
+
+| State | Meaning |
+|---|---|
+| **Affected** | A version you run falls inside a published affected range |
+| **Possibly affected** | The product matches, but the version could not be compared — go and check |
+| **Not affected** | Your version is outside every published range. Kept, not hidden |
+
+The middle state is the common one, and that is the point. Most advisories do
+not publish a machine-readable range, so the matcher refuses to guess: it says
+*go and check* rather than *you are safe*. Only 52% of the collected product
+rows carry a CPE at all, and the version strings include things like
+`Hh-B20211125.1046`.
+
+Research and news reach an environment through the CVEs they mention, each
+tagged with *your* CVEs rather than the article's whole list.
+
+The inventory never leaves the deployment — nothing sends it to a source, and no
+asset appears in a log. It is restricted to `AUTH_ADMIN_EMAILS`, which must be
+set explicitly: unset means nobody sees it. Read SECURITY.md and DEPLOY.md
+before enabling it for anyone but yourself.
+
+---
+
 ## Threat Relevance Score
 
 A transparent 0–100 prioritisation score — **not** a CVSS replacement. Each
@@ -227,14 +263,21 @@ Collection rules, applied everywhere:
 Unit 42, Talos, BleepingComputer, Krebs, The Record; dashboard, search, filters,
 CVE detail page, timeline, source health, exports, scheduled ingestion.
 
-**Phase 2.** MSRC (CVRF), Mandiant, SentinelLabs, CrowdStrike, Qualys, Project
-Zero, SigmaHQ, YARA, OTX, MalwareBazaar, URLhaus, VirusTotal lookups. These
-sources are already registered, documented and visible on the Source Health
-page — their workers are what is missing. The feed-based ones only need
+**Phase 2.** Twelve sources, registered and documented, split in two: six are
+RSS and already resolve to the generic feed worker, so they need configuration
+rather than code —
 `SOURCES_ENABLED=msrc,mandiant,sentinellabs,crowdstrike,qualys,project_zero`.
+The other six (SigmaHQ, YARA, OTX, MalwareBazaar, URLhaus, VirusTotal) need a
+worker each. **`ROADMAP.md` has the verified breakdown.**
+
+**Rampart — done.** Register your technology inventory and see the corpus
+filtered and prioritised against it, with an explainable state on every match.
+Phase 3's watchlists are meant to be built on its `environments` table rather
+than beside it.
 
 **Phase 3.** Threat graph, watchlists with alerts, notification centre, daily
-briefing, optional AI summaries (every sentence traceable to a collected source).
+briefing, optional AI summaries (every sentence traceable to a collected
+source). Watchlists build on Rampart's `environments` table.
 
 ---
 
