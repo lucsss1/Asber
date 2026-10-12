@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import attack, content, dashboard, vulnerabilities
+from app.api import attack, content, dashboard, rampart, vulnerabilities
 from app.config import get_settings
 from app.db import create_schema, session_scope
 from app.ingestion.base import sync_registry
@@ -62,6 +62,7 @@ app.include_router(dashboard.router)
 app.include_router(vulnerabilities.router)
 app.include_router(content.router)
 app.include_router(attack.router)
+app.include_router(rampart.router)
 
 
 @app.get("/api/health")

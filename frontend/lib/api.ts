@@ -55,6 +55,33 @@ export async function apiSafe<T>(path: string, params?: Query): Promise<T | null
   }
 }
 
+/** The mutating counterpart of `api`.
+ *
+ *  Only ever called from a Server Action: the browser never reaches the
+ *  backend, and the CORS policy there allows GET and POST from the dashboard
+ *  origin alone, so the PATCH and DELETE below are unreachable cross-origin by
+ *  construction rather than by convention.
+ */
+export async function apiWrite<T>(path: string, method: "POST" | "PATCH" | "DELETE",
+                                  body?: unknown): Promise<T | null> {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    cache: "no-store",
+    headers: { Accept: "application/json", ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail ?? detail;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new ApiError(String(detail), res.status);
+  }
+  return res.status === 204 ? null : ((await res.json()) as T);
+}
+
 // ---------------------------------------------------------------- types
 export interface Paged<T> {
   total: number;

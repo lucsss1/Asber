@@ -44,3 +44,20 @@ export function isAdmin(email: string | null | undefined): boolean {
   if (!email) return false;
   return adminEmails().includes(email.toLowerCase());
 }
+
+/** Who may see the Rampart inventory.
+ *
+ *  Deliberately *not* isAdmin(). That function falls back to the full allowlist
+ *  when AUTH_ADMIN_EMAILS is unset, which is a reasonable default for "may
+ *  trigger an ingestion run" and the wrong one here: an inventory is a map of
+ *  the deployment's attack surface, and it must not become readable to every
+ *  allowed account because a variable was never set.
+ *
+ *  So this one fails closed. No AUTH_ADMIN_EMAILS, no Rampart — for anybody.
+ */
+export function isRampartOwner(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const owners = parseList(process.env.AUTH_ADMIN_EMAILS);
+  if (!owners.length) return false;
+  return owners.includes(email.toLowerCase());
+}

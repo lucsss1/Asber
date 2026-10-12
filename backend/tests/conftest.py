@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+from datetime import datetime, timedelta, timezone
 
 import httpx
 import pytest
@@ -102,3 +103,27 @@ def http(router) -> HttpClient:
                         transport=httpx.MockTransport(router.handler), sleep=lambda _s: None)
     yield client
     client.close()
+
+
+def kev_fixture(days_ago: tuple[int, ...] = (4, 9)) -> bytes:
+    """The CISA KEV payload with its dates anchored to today.
+
+    The fixture carried fixed dates, which meant the suite rotted with the
+    calendar rather than with the code: on 2026-10-10 the older of its two
+    valid entries aged out of the 30-day window and test_dashboard_overview
+    started failing on a date change, two days before anybody looked.
+
+    Entries whose ``dateAdded`` is deliberately malformed are left alone —
+    the parser is supposed to survive them, and that is its own test.
+    """
+    payload = fixture_json("cisa_kev.json")
+    today = datetime.now(timezone.utc).date()
+    offsets = iter(days_ago)
+    for item in payload.get("vulnerabilities", []):
+        raw = item.get("dateAdded")
+        try:
+            datetime.strptime(str(raw), "%Y-%m-%d")
+        except (TypeError, ValueError):
+            continue  # malformed on purpose; leave it that way
+        item["dateAdded"] = (today - timedelta(days=next(offsets, 1))).isoformat()
+    return json.dumps(payload).encode()

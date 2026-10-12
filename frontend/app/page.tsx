@@ -6,6 +6,7 @@ import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
 import { Pending } from "@/components/Pending";
 import { Fold } from "@/components/Fold";
+import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     );
   }
 
+  // Only owners see this, and only when something is registered: an empty
+  // card would be an advert for a feature on a page that answers a question.
+  const rampart = (await canSeeRampart())
+    ? await apiSafe<EnvironmentView>("/api/rampart/environment")
+    : null;
+
   const unhealthy = data.source_health.errors.length + data.source_health.stale.length;
   const urgent = (data.cards.actively_exploited ?? 0) + (data.cards.kev_added ?? 0);
 
@@ -149,6 +156,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
       </Fold>
 
+      {rampart ? <RampartCard env={rampart} /> : null}
+
       <Panel
         title={urgent > 0 ? "Start here" : "Highest relevance"}
         action={
@@ -211,5 +220,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </Panel>
       </Fold>
     </>
+  );
+}
+
+
+/** What the owner's own environment looks like today, on the page they open first. */
+function RampartCard({ env }: { env: EnvironmentView }) {
+  if (!env.assets.length) return null;
+  const { affected, possibly_affected: possibly } = env.counts;
+  return (
+    <Link href="/rampart/threats" className="rampart-card">
+      <span className="rampart-card-label">Rampart</span>
+      <span className="rampart-card-body">
+        {affected > 0 ? (
+          <>
+            <b className="rampart-hot">{affected}</b> reaching your environment
+          </>
+        ) : (
+          <>Nothing reaching your environment</>
+        )}
+        {possibly > 0 ? <span className="faint"> · {possibly} to check</span> : null}
+      </span>
+      <span className="faint">{env.assets.length} assets →</span>
+    </Link>
   );
 }
