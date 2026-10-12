@@ -16,7 +16,7 @@ from app.workers.exploitdb import ExploitDbWorker
 from app.workers.feed import FeedWorker
 from app.workers.github import GithubWorker
 from app.workers.nvd import NvdWorker
-from tests.conftest import fixture
+from tests.conftest import fixture, kev_fixture
 from tests.test_workers import ATTACK_INDEX, BUNDLE_URL, EDB_URL, KEV_URL, attack_index
 
 NOW = datetime(2026, 9, 16, tzinfo=timezone.utc)
@@ -25,7 +25,7 @@ NOW = datetime(2026, 9, 16, tzinfo=timezone.utc)
 def full_pipeline(router, http, session_maker, settings):
     router.add(ATTACK_INDEX, attack_index())
     router.add(BUNDLE_URL, fixture("attack_mini.json"))
-    router.add(KEV_URL, fixture("cisa_kev.json"))
+    router.add(KEV_URL, kev_fixture())
     router.add("https://services.nvd.nist.gov/rest/json/cves/2.0", fixture("nvd_cves.json"))
     router.add(EDB_URL, fixture("exploitdb.csv"))
     router.add(REGISTRY_BY_KEY["unit42"].endpoint, fixture("feed_research.xml"))
@@ -113,7 +113,7 @@ def test_full_pipeline_correlates_one_threat(router, http, session_maker, settin
 def test_heuristic_mapping_when_no_report_mentions_techniques(router, http, session_maker, settings, session):
     router.add(ATTACK_INDEX, attack_index())
     router.add(BUNDLE_URL, fixture("attack_mini.json"))
-    router.add(KEV_URL, fixture("cisa_kev.json"))
+    router.add(KEV_URL, kev_fixture())
     from app.workers.mitre_attack import MitreAttackWorker
 
     run_worker(MitreAttackWorker(), session_maker, http, settings)
