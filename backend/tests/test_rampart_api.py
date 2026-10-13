@@ -364,3 +364,54 @@ def test_documents_are_scoped_to_the_owner(client, corpus, session):
         assert client.get("/api/rampart/documents").json()["items"] == []
     finally:
         app.dependency_overrides.pop(current_owner, None)
+
+
+# -------------------------------------------------------------- by asset
+def test_threats_can_be_narrowed_to_one_asset(client, corpus, session):
+    """Reachability, not priority.
+
+    The ordering already surfaces what matters; what it cannot do is stop a
+    small, exposed asset from sitting behind a large, noisy one.
+    """
+    session.add(Vulnerability(cve_id="CVE-2026-0010", vendor="microsoft", product="windows 10"))
+    session.add(AffectedProduct(cve_id="CVE-2026-0010", vendor="microsoft", product="windows 10",
+                                cpe="", versions=">= 10.0 < 11.0", source_key="nvd"))
+    session.commit()
+
+    fw = add_asset(client).json()
+    pc = add_asset(client, label="Laptop", category="os", vendor="microsoft",
+                   product="windows 10", version="10.5").json()
+
+    everything = client.get("/api/rampart/threats").json()
+    assert {a["id"] for a in everything["assets"]} == {fw["id"], pc["id"]}
+    assert everything["asset_id"] is None
+
+    only_fw = client.get("/api/rampart/threats", params={"asset_id": fw["id"]}).json()
+    assert only_fw["asset_id"] == fw["id"]
+    assert "CVE-2026-0010" not in [i["cve_id"] for i in only_fw["items"]]
+    # The match detail is narrowed too, not just the rows.
+    assert all(m["asset_id"] == fw["id"] for m in only_fw["matches"].values())
+
+
+def test_asset_counts_ride_along_with_every_response(client, corpus):
+    add_asset(client)
+    body = client.get("/api/rampart/threats").json()
+    fw = body["assets"][0]
+    assert fw["label"] == "Edge firewall"
+    assert fw["affected"] == 1 and fw["not_affected"] == 1
+
+
+def test_an_unknown_asset_is_refused(client, corpus):
+    add_asset(client)
+    assert client.get("/api/rampart/threats", params={"asset_id": 99999}).status_code == 404
+    assert client.get("/api/rampart/threats", params={"asset_id": 0}).status_code == 422
+
+
+def test_another_owner_cannot_filter_by_your_asset(client, corpus):
+    asset_id = add_asset(client).json()["id"]
+    app.dependency_overrides[current_owner] = lambda: "someone-else"
+    try:
+        r = client.get("/api/rampart/threats", params={"asset_id": asset_id})
+        assert r.status_code == 404, "the other owner's asset does not exist here"
+    finally:
+        app.dependency_overrides.pop(current_owner, None)

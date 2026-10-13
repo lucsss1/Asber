@@ -1140,3 +1140,37 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .picker-list button { font-size: 14px; color: var(--ink-2); }
 .picker-list button.on { background: var(--signal); color: var(--on-signal); font-weight: 600; }
 .picker-list button[aria-selected="true"]:not(.on) { color: var(--ink); font-weight: 600; }
+
+/* ----------------------------------------------------------- asset tabs
+   Reachability, not priority. The ordering already puts the CISA KEV entries
+   in the top rows; what it cannot do is stop a three-match firewall from
+   sitting behind thirteen hundred browser and server matches. One click. */
+.asset-tabs {
+  display: flex; gap: 0; flex-wrap: wrap;
+  border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--space-5);
+}
+.asset-tab {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  margin-right: var(--space-5);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.asset-tab-name { font-size: 13px; font-weight: 600; color: var(--ink-3); }
+.asset-tab-counts { font-size: 12px; color: var(--ink-3); }
+.asset-tab-counts b {
+  font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+/* Warm only where something is actually affected — the rule holds here too. */
+.asset-tab-counts b.asset-tab-hot { color: var(--risk-critical); }
+.asset-tab.on { border-bottom-color: var(--signal); }
+.asset-tab.on .asset-tab-name { color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .asset-tab:hover .asset-tab-name { color: var(--ink); }
+}
+@media (max-width: 1000px) {
+  .asset-tabs { gap: var(--space-2); }
+  .asset-tab { margin-right: var(--space-3); }
+}

@@ -144,13 +144,58 @@ def list_matches(session: Session, owner: str, environment_id: int,
 
 
 def matched_cve_ids(session: Session, owner: str, environment_id: int,
-                    states: list[str] | None = None) -> list[str]:
+                    states: list[str] | None = None, asset_id: int | None = None) -> list[str]:
     """The CVEs this environment touches, for joining onto the existing filters."""
     stmt = select(EnvironmentMatch.cve_id).where(
         EnvironmentMatch.owner_id == owner, EnvironmentMatch.environment_id == environment_id
     )
     stmt = stmt.where(EnvironmentMatch.state.in_(states or [matching.AFFECTED, matching.POSSIBLY_AFFECTED]))
+    if asset_id is not None:
+        stmt = stmt.where(EnvironmentMatch.asset_id == asset_id)
     return list(session.scalars(stmt.distinct()))
+
+
+def counts_by_asset(session: Session, owner: str, environment_id: int) -> list[dict]:
+    """How much of the corpus reaches each asset, broken out by state.
+
+    The ordering is already right — the ten CVEs in CISA KEV occupy the ten
+    top rows — but ordering alone cannot stop a three-match firewall from
+    sitting behind thirteen hundred browser and server matches. An asset that
+    faces the internet should be reachable in one click, not on page fifty.
+    """
+    rows = session.execute(
+        select(
+            EnvironmentAsset.id,
+            EnvironmentAsset.label,
+            EnvironmentAsset.vendor,
+            EnvironmentAsset.product,
+            EnvironmentAsset.category,
+            EnvironmentMatch.state,
+            func.count().label("n"),
+        )
+        .join(EnvironmentMatch, EnvironmentMatch.asset_id == EnvironmentAsset.id)
+        .where(
+            EnvironmentAsset.owner_id == owner,
+            EnvironmentAsset.environment_id == environment_id,
+        )
+        .group_by(
+            EnvironmentAsset.id, EnvironmentAsset.label, EnvironmentAsset.vendor,
+            EnvironmentAsset.product, EnvironmentAsset.category, EnvironmentMatch.state,
+        )
+    ).all()
+
+    by_id: dict[int, dict] = {}
+    for asset_id, label, vendor, product, category, state, n in rows:
+        entry = by_id.setdefault(asset_id, {
+            "id": asset_id, "label": label, "vendor": vendor, "product": product,
+            "category": category, "affected": 0, "possibly_affected": 0, "not_affected": 0,
+        })
+        if state in entry:
+            entry[state] = n
+
+    # Most exposed first; an asset with nothing against it still appears, so
+    # "we checked and found nothing" stays distinguishable from "not checked".
+    return sorted(by_id.values(), key=lambda a: (-a["affected"], -a["possibly_affected"], a["label"]))
 
 
 def exposure_by_cve(session: Session, owner: str, environment_id: int, states: list[str] | None = None):
