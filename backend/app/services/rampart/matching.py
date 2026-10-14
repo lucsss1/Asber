@@ -31,6 +31,9 @@ AFFECTED = "affected"
 POSSIBLY_AFFECTED = "possibly_affected"
 NOT_AFFECTED = "not_affected"
 
+#: Every verdict there is, in the order a reader cares about them.
+STATES = (AFFECTED, POSSIBLY_AFFECTED, NOT_AFFECTED)
+
 IN = "in"
 OUT = "out"
 UNKNOWN = "unknown"

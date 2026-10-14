@@ -18,12 +18,24 @@ type AssetCount = {
   affected: number;
   possibly_affected: number;
   not_affected: number;
+  /** Under the state filter currently on screen — what clicking this tab shows. */
+  total: number;
 };
 
 type Result = Paged<Vuln> & {
   matches: Record<string, Match>;
   assets: AssetCount[];
   asset_id: number | null;
+  /** Distinct across every asset, so it is not the sum of the tabs. */
+  environment_total: number;
+};
+
+/** What a tab's number is counting, so it reads as the same unit as the panel. */
+const STATE_NOUN: Record<string, string> = {
+  "": "reaching you",
+  affected: "affected",
+  possibly_affected: "to check",
+  not_affected: "ruled out",
 };
 
 const STATES = [
@@ -72,8 +84,11 @@ export default async function RampartThreatsPage({ searchParams }: { searchParam
             className={`asset-tab${assetId ? "" : " on"}`}
           >
             <span className="asset-tab-name">Everything</span>
+            {/* The environment-wide number comes from the API, not from adding
+                the tabs up: a CVE can be affected on one asset and merely
+                possible on another, and the sum would count it twice. */}
             <span className="asset-tab-counts">
-              <b>{data.assets.reduce((n, a) => n + a.affected, 0)}</b> affected
+              <b>{data.environment_total.toLocaleString()}</b> {STATE_NOUN[state] ?? "shown"}
             </span>
           </Link>
           {data.assets.map((a) => (
@@ -84,8 +99,15 @@ export default async function RampartThreatsPage({ searchParams }: { searchParam
             >
               <span className="asset-tab-name">{a.label}</span>
               <span className="asset-tab-counts">
-                <b className={a.affected ? "asset-tab-hot" : undefined}>{a.affected}</b> affected
-                {a.possibly_affected ? <span className="faint"> · {a.possibly_affected} to check</span> : null}
+                <b className={a.affected && state !== "not_affected" ? "asset-tab-hot" : undefined}>
+                  {a.total.toLocaleString()}
+                </b>{" "}
+                {STATE_NOUN[state] ?? "shown"}
+                {/* Only when it splits the number: "14 reaching you · 14 to
+                    check" says nothing twice. */}
+                {!state && a.affected && a.possibly_affected ? (
+                  <span className="faint"> · {a.possibly_affected.toLocaleString()} to check</span>
+                ) : null}
               </span>
             </Link>
           ))}

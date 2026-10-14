@@ -264,21 +264,33 @@ def threats(
     if asset_id is not None and repository.get_asset(session, owner, asset_id) is None:
         raise HTTPException(404, "asset not found")
 
+    stmt = build_query(session, window=window, kev=kev, exploited=exploited, exploit=exploit, poc=poc,
+                       severity=severity, tag=tag, platform=platform, technique=technique,
+                       min_score=min_score, sort=sort)
+
     # The per-asset shape rides along with every response: it is what lets a
     # three-match firewall stay reachable beside thirteen hundred browser
-    # matches, and it costs one grouped query.
-    assets = repository.counts_by_asset(session, owner, env.id)
+    # matches. It counts the CVEs that survive the filters on screen, in every
+    # state, so each tab is a preview of the table rather than a second,
+    # larger number sitting next to it.
+    passing = list(session.scalars(
+        stmt.with_only_columns(Vulnerability.cve_id).order_by(None).where(
+            Vulnerability.cve_id.in_(
+                repository.matched_cve_ids(session, owner, env.id, list(matching.STATES))
+            )
+        )
+    ))
+    shape = repository.counts_by_asset(session, owner, env.id, passing, state)
+    assets, environment_total = shape["assets"], shape["total"]
 
     cve_ids = repository.matched_cve_ids(session, owner, env.id, state, asset_id)
     session.commit()
     empty = {"total": 0, "page": page.page, "page_size": page.page_size,
-             "items": [], "matches": {}, "assets": assets, "asset_id": asset_id}
+             "items": [], "matches": {}, "assets": assets, "asset_id": asset_id,
+             "environment_total": environment_total}
     if not cve_ids:
         return empty
 
-    stmt = build_query(session, window=window, kev=kev, exploited=exploited, exploit=exploit, poc=poc,
-                       severity=severity, tag=tag, platform=platform, technique=technique,
-                       min_score=min_score, sort=sort)
     stmt = stmt.where(Vulnerability.cve_id.in_(cve_ids))
 
     if sort == "relevance":
@@ -297,6 +309,7 @@ def threats(
     # never shows a state the reader cannot interrogate.
     result["assets"] = assets
     result["asset_id"] = asset_id
+    result["environment_total"] = environment_total
 
     shown = {item["cve_id"] for item in result["items"]}
     result["matches"] = {
