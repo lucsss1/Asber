@@ -1,77 +1,93 @@
 /* ===========================================================================
    Asber design system: an instrument, not a publication.
 
-   - Warm means threat. Cool means interface. Nothing warm appears on screen
-     unless something is actually wrong, so the risk scale owns red, orange
-     and amber outright and the chrome never competes with it. This replaces
-     the lime highlighter, which was the brightest thing on every screen and
-     sat in the same peripheral channel as a critical severity.
+   The visual world is pinned to veilit.xyz — a violet-black ground, one cool
+   violet accent, amber for exposure, and tight display tracking over small,
+   wide-tracked labels. What that reference supplies is the surface language.
+   What it does not get to touch are the three rules this product is built on:
+
+   - Warm means threat. Cool means interface. The accent moved from blue to
+     violet, which is still unmistakably cool, so nothing warm appears on
+     screen unless something is actually wrong. The risk scale is built from
+     the reference's own warm family — amber for exposure, rose for critical —
+     so heat stays the single channel that means danger.
    - Two voices. The sans works; the mono records. Mono is reserved for data
-     you might copy or compare -- ids, dates, CVSS vectors, scores -- and no
-     longer sets the labels and column headings, where it made the chrome as
-     loud as the numbers.
-   - Tracking is size-specific. Display sizes tighten, body sits at zero,
-     small labels open slightly. One value for every size is wrong somewhere.
-   - Surfaces are lifted by lightness, with rules kept for real divisions.
-     Corners are soft (6px) rather than square.
+     you might copy or compare -- ids, dates, CVSS vectors, scores -- and
+     never sets labels or headings.
+   - Tracking is size-specific. Display tightens hard (-0.035em), body sits
+     at zero, small labels open to 0.08em. One value for every size is wrong
+     somewhere.
+
+   Surfaces lift by lightness over a violet-black ground, each with a hairline
+   of light along its top edge so depth comes from a single overhead source.
    Night (dark) is the default; Paper (light) follows the OS preference.
    =========================================================================== */
 
 :root {
   color-scheme: dark;
 
-  /* grounds, lightest last. Cool and neutral, so anything warm reads as heat */
-  --ground: #0b0c0f;
-  --surface: #121419;
-  --surface-2: #191c22;
-  --surface-3: #242833;
+  /* grounds, lightest last. Violet-black: cool and deep, so anything warm
+     reads as heat against it. */
+  --ground: #05040b;
+  --surface: #0c0a18;
+  --surface-2: #131026;
+  --surface-3: #1c1734;
 
   /* lines: rule is decorative, rule-strong is >=3:1 for control borders */
-  --rule: #23262e;
-  --rule-strong: #6b7280;
-  --grid: #ffffff07;
+  --rule: #ffffff14;
+  --rule-strong: #6f6a85;
+  --grid: #a08bff0a;
+  /* the hairline of light every raised surface carries along its top edge */
+  --edge: inset 0 1px 0 #ffffff12;
 
-  /* text; ink-3 never on surface-3 */
-  --ink: #e9ebef;
-  --ink-2: #a7adba;
-  --ink-3: #7b8290;
+  /* text; measured against every ground, ink-3 clears 4.5:1 on all four */
+  --ink: #f6f4ff;
+  --ink-2: #a9a4bd;
+  --ink-3: #8681a0;
 
-  /* interface accent: cool on purpose, so it cannot be mistaken for risk.
-     signal is a FILL, signal-ink is accent TEXT */
-  --signal: #4b8dfd;
-  --on-signal: #f2f7ff;
-  --signal-ink: #8fbcff;
-  --signal-wash: #4b8dfd24;
-  --focus-ring: #8fbcff;
+  /* interface accent: violet, cool on purpose, so it cannot be mistaken for
+     risk. signal is a FILL, signal-ink is accent TEXT */
+  --signal: #a08bff;
+  --on-signal: #0b0818;
+  --signal-ink: #c9bbff;
+  --signal-wash: #a08bff1a;
+  --signal-deep: #6b4ff0;
+  --focus-ring: #ddd3ff;
+  /* the two lights on the ground; near is overhead, far is off to one side */
+  --wash-near: #a08bff1f;
+  --wash-far: #6b4ff01f;
 
   /* risk scale, used ONLY for risk/severity -- the sole warm range on screen */
-  --risk-critical: #ff5f52;
-  --on-critical: #1a0503;
-  --risk-high: #ff9f45;
-  --risk-medium: #d9b477;
+  --risk-critical: #ff6b7f;
+  --on-critical: #220309;
+  --risk-high: #ffb547;
+  --risk-medium: #ffd391;
   --risk-low: var(--ink-3);
 
   /* collector state, always paired with a word */
-  --ok: #4ec98a;
-  --warn: #e0b040;
+  --ok: #7ee2b8;
+  --warn: #ffb547;
 
-  --shadow-float: 0 0 0 1px #6b7280, 0 12px 32px #000000b3;
-  --shadow-lift: 0 1px 2px #00000059;
+  /* Shadows carry the ground's own hue rather than neutral black, and every
+     lifted surface gets the same inset hairline, so the light has one source. */
+  --shadow-float: 0 0 0 1px #ffffff1f, var(--edge), 0 20px 60px -20px #6b4ff08c, 0 10px 40px #00000099;
+  --shadow-lift: var(--edge), 0 2px 8px #00000066;
 
-  /* soft, not square: 6px on surfaces and controls, 3px on chips */
-  --radius-0: 3px;
-  --radius-1: 6px;
+  /* corners soften outward: chips tight, controls middling, panels generous */
+  --radius-0: 6px;
+  --radius-1: 10px;
+  --radius-2: 16px;
   --radius-dot: 999px;
 
   /* tracking is size-specific; see the manifesto */
-  --track-display: -0.022em;
-  --track-title: -0.011em;
+  --track-display: -0.035em;
+  --track-title: -0.02em;
   --track-body: 0em;
-  --track-label: 0.045em;
+  --track-label: 0.08em;
 
   /* motion. The built-in CSS curves are too weak to read as intentional, and
      every press uses the same scale so the whole app depresses identically. */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out: cubic-bezier(0.22, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --press: 0.97;
 
@@ -79,36 +95,42 @@
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
 
-  --sans: var(--font-sans), Inter, system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --mono: var(--font-mono), "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --sans: var(--font-sans), "Geist", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --mono: var(--font-mono), "Geist Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --ground: #eef0f4;
+    /* Paper carries the same violet bias, so the two themes are one world
+       seen under different light rather than two palettes. */
+    --ground: #f4f2fa;
     --surface: #ffffff;
-    --surface-2: #e7eaef;
-    --surface-3: #d9dde5;
-    --rule: #d3d8e0;
-    --rule-strong: #7a8292;
-    --grid: #14161a0a;
-    --ink: #14161a;
-    --ink-2: #454b56;
-    --ink-3: #5e6673;
-    --signal: #1d5fd0;
+    --surface-2: #ece9f6;
+    --surface-3: #ded9ef;
+    --rule: #05041914;
+    --rule-strong: #6f6a85;
+    --grid: #6b4ff00d;
+    --edge: inset 0 1px 0 #ffffff;
+    --ink: #140f24;
+    --ink-2: #4a4360;
+    --ink-3: #605980;
+    --signal: #6b4ff0;
     --on-signal: #ffffff;
-    --signal-ink: #1450bb;
-    --signal-wash: #1d5fd021;
-    --focus-ring: #1450bb;
-    --risk-critical: #c02a17;
+    --signal-ink: #5a3cdd;
+    --signal-wash: #6b4ff01f;
+    --signal-deep: #4b2fc9;
+    --focus-ring: #5a3cdd;
+    --wash-near: #6b4ff014;
+    --wash-far: #6b4ff00f;
+    --risk-critical: #c2203d;
     --on-critical: #ffffff;
-    --risk-high: #97490b;
-    --risk-medium: #6f5a35;
-    --ok: #17703f;
-    --warn: #7a5600;
-    --shadow-float: 0 0 0 1px #7a8292, 0 12px 32px #14161a24;
-    --shadow-lift: 0 1px 2px #14161a1a;
+    --risk-high: #8a5006;
+    --risk-medium: #6f5520;
+    --ok: #0d6b48;
+    --warn: #8a5a00;
+    --shadow-float: 0 0 0 1px #05041926, var(--edge), 0 20px 60px -24px #4b2fc959, 0 8px 28px #14101f1a;
+    --shadow-lift: var(--edge), 0 1px 3px #14101f14;
   }
 }
 
@@ -119,12 +141,20 @@ html, body {
   padding: 0;
   /* A hairline grid on the ground. It is barely visible and doing a lot of
      work: it stops the page reading as cards floating on flat grey, and puts
-     everything on plotting paper instead. One gradient, no images. */
+     everything on plotting paper instead. One gradient, no images.
+     Over it sits a single violet wash, anchored where the rail meets the
+     content, so the page has a light source instead of being evenly lit. It
+     is fixed, so it does not travel with the scroll and never reads as an
+     element. */
   background-color: var(--ground);
   background-image:
+    radial-gradient(90% 60% at 50% -8%, var(--wash-near), transparent 70%),
+    radial-gradient(55% 45% at 88% 18%, var(--wash-far), transparent 70%),
     linear-gradient(to right, var(--grid) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-  background-size: 64px 64px;
+  background-size: 100% 820px, 100% 900px, 64px 64px, 64px 64px;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  background-attachment: fixed, fixed, scroll, scroll;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 14px;
@@ -133,18 +163,34 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
+/* The surfaces nobody draws still carry the design. Left alone, the caret,
+   the scrollbar and the checkbox ship in colours that belong to no palette
+   and give the page away as assembled rather than built. */
 ::selection { background: var(--signal); color: var(--on-signal); }
 :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+html { scrollbar-color: var(--surface-3) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3); border-radius: var(--radius-dot);
+  border: 3px solid var(--ground);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--rule-strong); }
+input, textarea { caret-color: var(--signal-ink); }
+input[type="checkbox"], input[type="radio"], progress { accent-color: var(--signal); }
 
 a { color: inherit; text-decoration: none; }
 .link { color: var(--signal-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .link:hover { text-decoration-thickness: 2px; }
 
-h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.25; text-wrap: balance; }
 /* Hierarchy comes from weight and leading as much as size, so the headline can
-   shrink and give the screen back to the content. */
-h1 { font-size: 28px; line-height: 34px; font-weight: 640; letter-spacing: var(--track-display); }
-h2 { font-size: 15px; font-weight: 620; letter-spacing: var(--track-title); }
+   shrink and give the screen back to the content. The display size tightens
+   hard and sets solid — at this tracking the letters close up and the line
+   reads as one shape, which is what gives a dense page a voice without
+   spending height on it. */
+h1 { font-size: 32px; line-height: 34px; font-weight: 600; letter-spacing: var(--track-display); }
+h2 { font-size: 15px; font-weight: 600; letter-spacing: var(--track-title); }
 h3 {
   font-size: 11px; font-weight: 620; color: var(--ink-3);
   letter-spacing: var(--track-label); text-transform: uppercase;
@@ -166,16 +212,25 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 .app { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* ------------------------------------------------------------------- rail */
+/* The rail floats rather than spanning the frame. Detaching it from the edges
+   is what lets the ground and its wash run behind, so the chrome reads as a
+   layer above the instrument instead of a band cut out of it. The glass is a
+   real effect here — there is content moving underneath — not decoration. */
 .rail {
-  position: sticky; top: 0; z-index: 30;
+  position: sticky; top: var(--space-3); z-index: 30;
   display: flex; align-items: center; gap: var(--space-4);
-  padding: 0 var(--space-6); height: 52px;
-  border-bottom: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--ground) 78%, transparent);
-  backdrop-filter: blur(16px) saturate(160%);
+  margin: var(--space-3) var(--space-6) 0;
+  padding: 0 var(--space-3) 0 var(--space-5); height: 52px;
+  border: 1px solid var(--rule); border-radius: var(--radius-dot);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--shadow-float);
 }
 @media (prefers-reduced-transparency: reduce) {
-  .rail { background: var(--ground); backdrop-filter: none; }
+  .rail { background: var(--surface); backdrop-filter: none; }
+}
+@media (max-width: 640px) {
+  .rail { margin-inline: var(--space-4); padding-inline: var(--space-4) var(--space-2); }
 }
 
 .rail-brand {
@@ -195,11 +250,13 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 }
 .rail-nav::-webkit-scrollbar { display: none; }
 .rail-link {
-  padding: 4px 9px; border-radius: var(--radius-1); white-space: nowrap;
+  padding: 5px 11px; border-radius: var(--radius-dot); white-space: nowrap;
   font-size: 13px; color: var(--ink-3);
   transition: color 120ms ease, background 120ms ease;
 }
-.rail-link.active { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+/* Where you are is the accent. It is the only nav item carrying colour, so
+   the answer to "which page is this" is readable without reading. */
+.rail-link.active { color: var(--signal-ink); background: var(--signal-wash); font-weight: 500; }
 @media (hover: hover) and (pointer: fine) { .rail-link:hover { color: var(--ink); } }
 
 .rail-more {
@@ -327,7 +384,7 @@ code, .mono { font-family: var(--mono); font-size: 0.92em; font-variant-ligature
 .panel-head h2::before {
   counter-increment: section;
   content: counter(section, decimal-leading-zero);
-  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3);
+  font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--signal);
   margin-right: var(--space-2); letter-spacing: 0.04em;
 }
 .panel-body { padding: 0; }
@@ -417,13 +474,17 @@ tbody tr { transition: background 100ms ease; }
 .toolbar .spacer { flex: 1; }
 
 /* segmented control: the selected segment inverts */
-.segmented { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: var(--radius-1); }
+/* Controls are pills. A filter is a thing you pick up and put down, and the
+   shape says so; the rectangles read as fields you were meant to fill in. */
+.segmented {
+  display: inline-flex; border: 1px solid var(--rule); border-radius: var(--radius-dot);
+  background: var(--surface); box-shadow: var(--shadow-lift); padding: 2px; gap: 2px;
+}
 .segmented a {
-  padding: 4px 10px; font-family: var(--mono); font-size: 12px; line-height: 18px; color: var(--ink-2);
-  white-space: nowrap; border-left: 1px solid var(--rule);
+  padding: 4px 12px; font-size: 12px; line-height: 18px; color: var(--ink-2);
+  white-space: nowrap; border-radius: var(--radius-dot);
   transition: background 120ms ease, color 120ms ease;
 }
-.segmented a:first-child { border-left: 0; }
 @media (hover: hover) and (pointer: fine) {
   .segmented a:hover { color: var(--ink); background: var(--surface-2); }
 }
@@ -431,11 +492,17 @@ tbody tr { transition: background 100ms ease; }
    whole group depresses instead. */
 .segmented { transition: transform 140ms var(--ease-out); }
 .segmented:has(a:active) { transform: scale(var(--press)); }
-.segmented a.on { background: var(--ink); color: var(--ground); }
+/* The selected segment is the accent, not an inversion: a white block in a
+   dark bar is the brightest thing on the page, and brightness is spoken for. */
+.segmented a.on {
+  background: var(--signal-wash); color: var(--signal-ink); font-weight: 500;
+  box-shadow: inset 0 0 0 1px var(--signal-wash), var(--edge);
+}
 
 .toggle {
-  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
-  border: 1px solid var(--rule-strong); border-radius: var(--radius-1);
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+  border: 1px solid var(--rule); border-radius: var(--radius-dot);
+  background: var(--surface); box-shadow: var(--shadow-lift);
   font-size: 13px; line-height: 18px; color: var(--ink-2); white-space: nowrap;
   transition: background 120ms ease, color 120ms ease, transform 140ms var(--ease-out);
 }
@@ -443,20 +510,30 @@ tbody tr { transition: background 100ms ease; }
   .toggle:hover { color: var(--ink); background: var(--surface-2); }
 }
 .toggle:active { transform: scale(var(--press)); }
-.toggle.on { background: var(--signal); border-color: var(--signal); color: var(--on-signal); font-weight: 600; }
+.toggle.on {
+  background: var(--signal-wash); border-color: color-mix(in srgb, var(--signal) 42%, transparent);
+  color: var(--signal-ink); font-weight: 500;
+}
 .toggle .x { font-size: 14px; line-height: 1; }
 
+/* Fields keep their corners. A pill is something you press; a rounded
+   rectangle is something you type into, and the difference is worth keeping. */
 input[type="text"], input[type="search"], input[type="email"], select {
-  background: var(--surface); border: 1px solid var(--rule-strong); color: var(--ink);
-  border-radius: var(--radius-1); padding: 6px 10px; font-size: 13.5px; font-family: inherit;
+  background: var(--surface-2); border: 1px solid var(--rule); color: var(--ink);
+  border-radius: var(--radius-1); padding: 7px 11px; font-size: 13.5px; font-family: inherit;
+  box-shadow: var(--edge);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+input[type="text"]:focus, input[type="search"]:focus, input[type="email"]:focus, select:focus {
+  border-color: color-mix(in srgb, var(--signal) 50%, transparent);
 }
 input::placeholder { color: var(--ink-3); }
 select { cursor: pointer; }
 
 button, .btn {
   display: inline-flex; align-items: center; gap: 6px;
-  background: transparent; border: 1px solid var(--rule-strong); color: var(--ink);
-  border-radius: var(--radius-1); padding: 6px 12px; font-size: 13px; font-weight: 500; line-height: 20px;
+  background: var(--surface); border: 1px solid var(--rule); color: var(--ink);
+  border-radius: var(--radius-dot); padding: 7px 14px; font-size: 13px; font-weight: 500; line-height: 20px;
   cursor: pointer; font-family: inherit;
   /* box-shadow is listed because .btn-primary reveals an inset rule on hover */
   transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease,
@@ -466,14 +543,30 @@ button, .btn {
   button:hover, .btn:hover { background: var(--surface-2); }
 }
 button:active, .btn:active { transform: scale(var(--press)); }
-.btn-primary { background: var(--signal); border-color: var(--signal); color: var(--on-signal); font-weight: 600; }
-.btn-primary:hover { background: var(--signal); box-shadow: inset 0 -2px 0 var(--on-signal); }
-.btn-ghost { border-color: transparent; color: var(--ink-2); }
+/* The lift lives on the class, not on the element: plenty of buttons here are
+   stripped back to naked text (table rows, palette entries), and a shadow is
+   the one part of the skin that still paints after background and border are
+   turned off. */
+.btn { box-shadow: var(--shadow-lift); }
+/* The one solid accent on screen, lifted by a shadow in its own hue so the
+   light that falls on it is the colour it is. */
+.btn-primary {
+  background: var(--signal); border-color: transparent; color: var(--on-signal); font-weight: 600;
+  box-shadow: var(--edge), 0 8px 24px -10px var(--signal-deep);
+}
+.btn-primary:hover { background: var(--signal-ink); }
+.btn-ghost { border-color: transparent; background: transparent; box-shadow: none; color: var(--ink-2); }
 .btn-ghost:hover { color: var(--ink); }
 
 details.more > summary {
   list-style: none; cursor: pointer; font-size: 13px; color: var(--ink-2); line-height: 20px;
-  padding: 6px 12px; border: 1px solid var(--rule-strong); border-radius: var(--radius-1); user-select: none;
+  padding: 7px 14px; border: 1px solid var(--rule); border-radius: var(--radius-dot);
+  background: var(--surface); box-shadow: var(--shadow-lift); user-select: none;
+  width: fit-content;
+  transition: background 120ms ease, color 120ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  details.more > summary:hover { background: var(--surface-2); color: var(--ink); }
 }
 details.more > summary::-webkit-details-marker { display: none; }
 details.more > summary { transition: background 120ms ease, color 120ms ease, transform 140ms var(--ease-out); }
@@ -626,7 +719,12 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   table { min-width: 620px; }
   .toolbar { gap: var(--space-1); }
   .searchfield { max-width: none; }
-  .rail { height: auto; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-4); }
+  /* Once the rail wraps to three rows it is a block, not a pill: a 999px
+     radius on a 120px-tall bar rounds the corners into the content. */
+  .rail {
+    height: auto; flex-wrap: wrap; gap: var(--space-2);
+    padding: var(--space-2) var(--space-4); border-radius: var(--radius-2);
+  }
   .rail-nav { order: 3; width: 100%; }
   .rail-end { width: auto; }
   .rail-end .searchfield { width: 180px; }

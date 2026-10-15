@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Rail } from "@/components/Rail";
 import { Pulse } from "@/components/Pulse";
@@ -17,14 +17,14 @@ import { authDisabled } from "@/lib/authz";
 //
 // Mono is now reserved for data. It used to also set every label and column
 // heading, which made the chrome as loud as the numbers.
-const sans = Inter({
+const sans = Geist({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
   fallback: ["system-ui", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
 });
 
-const mono = IBM_Plex_Mono({
+const mono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-mono",
