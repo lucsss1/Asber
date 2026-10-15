@@ -12,6 +12,7 @@ someone notices.
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timezone
 
 from sqlalchemy import delete, func, select
@@ -144,13 +145,71 @@ def list_matches(session: Session, owner: str, environment_id: int,
 
 
 def matched_cve_ids(session: Session, owner: str, environment_id: int,
-                    states: list[str] | None = None) -> list[str]:
+                    states: list[str] | None = None, asset_id: int | None = None) -> list[str]:
     """The CVEs this environment touches, for joining onto the existing filters."""
     stmt = select(EnvironmentMatch.cve_id).where(
         EnvironmentMatch.owner_id == owner, EnvironmentMatch.environment_id == environment_id
     )
     stmt = stmt.where(EnvironmentMatch.state.in_(states or [matching.AFFECTED, matching.POSSIBLY_AFFECTED]))
+    if asset_id is not None:
+        stmt = stmt.where(EnvironmentMatch.asset_id == asset_id)
     return list(session.scalars(stmt.distinct()))
+
+
+def counts_by_asset(session: Session, owner: str, environment_id: int,
+                    cve_ids: list[str] | None = None,
+                    states: Sequence[str] | None = None) -> dict:
+    """How much of the corpus reaches each asset, broken out by state.
+
+    The ordering is already right — the ten CVEs in CISA KEV occupy the ten
+    top rows — but ordering alone cannot stop a three-match firewall from
+    sitting behind thirteen hundred browser and server matches. An asset that
+    faces the internet should be reachable in one click, not on page fifty.
+
+    ``cve_ids`` narrows the count to a set the caller has already filtered, so
+    each tab counts exactly the rows the table is about to show; ``states`` is
+    the selection the headline number covers. Both the per-asset headline and
+    the environment-wide one are folded from the same tuples, because the
+    environment-wide one is **not** the sum of the others: a CVE can be
+    ``affected`` on one asset and ``possibly_affected`` on another, and adding
+    the columns would count it twice.
+    """
+    rows = session.execute(
+        select(EnvironmentMatch.asset_id, EnvironmentMatch.cve_id, EnvironmentMatch.state)
+        .join(EnvironmentAsset, EnvironmentAsset.id == EnvironmentMatch.asset_id)
+        .where(
+            EnvironmentAsset.owner_id == owner,
+            EnvironmentAsset.environment_id == environment_id,
+            *([EnvironmentMatch.cve_id.in_(cve_ids)] if cve_ids is not None else []),
+        )
+    ).all()
+
+    wanted = set(states) if states else {matching.AFFECTED, matching.POSSIBLY_AFFECTED}
+
+    # Seeded from the asset list, not from the matches: an asset the filters
+    # emptied must still have a tab, or turning on "In CISA KEV" makes the
+    # firewall vanish rather than read zero. Zero is an answer; absence is not.
+    by_id: dict[int, dict] = {
+        a.id: {"id": a.id, "label": a.label, "vendor": a.vendor, "product": a.product,
+               "category": a.category, "affected": 0, "possibly_affected": 0,
+               "not_affected": 0, "total": 0}
+        for a in list_assets(session, owner, environment_id)
+    }
+    everything: set[str] = set()
+    for asset_id, cve_id, state in rows:
+        entry = by_id.get(asset_id)
+        if entry is None or state not in entry:
+            continue
+        entry[state] += 1
+        if state in wanted:
+            entry["total"] += 1
+            everything.add(cve_id)
+
+    # Most exposed first; an asset with nothing against it still appears, so
+    # "we checked and found nothing" stays distinguishable from "not checked".
+    assets = sorted(by_id.values(),
+                    key=lambda a: (-a["affected"], -a["possibly_affected"], a["label"]))
+    return {"assets": assets, "total": len(everything)}
 
 
 def exposure_by_cve(session: Session, owner: str, environment_id: int, states: list[str] | None = None):
