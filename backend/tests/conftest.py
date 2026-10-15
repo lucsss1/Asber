@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -127,3 +128,36 @@ def kev_fixture(days_ago: tuple[int, ...] = (4, 9)) -> bytes:
             continue  # malformed on purpose; leave it that way
         item["dateAdded"] = (today - timedelta(days=next(offsets, 1))).isoformat()
     return json.dumps(payload).encode()
+
+
+#: RFC 822 needs English day and month names whatever the host locale is, so
+#: they are spelled out rather than left to ``strftime``.
+_RFC822_DAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+_RFC822_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def research_fixture(days_ago: tuple[int, ...] = (3, 2)) -> bytes:
+    """The research feed with its ``pubDate`` values anchored to today.
+
+    Same rot as ``kev_fixture`` and the same cure. The feed's two dated items
+    were fixed at 14 and 15 September 2026, and ``observed_at`` on an ATT&CK
+    link is inherited from the document that produced it — so on 2026-10-15
+    the APT28 item, the only one carrying a technique mention, fell outside the
+    30-day window and ``test_dashboard_overview`` failed on a date change
+    rather than on a code change.
+
+    The offsets keep the items in their original order, newest last, because
+    one test asserts which document is the most recent.
+    """
+    text = fixture("feed_research.xml").decode()
+    now = datetime.now(timezone.utc)
+    offsets = iter(days_ago)
+
+    def anchor(_match) -> str:
+        when = now - timedelta(days=next(offsets, 1))
+        return (f"<pubDate>{_RFC822_DAYS[when.weekday()]}, {when.day:02d} "
+                f"{_RFC822_MONTHS[when.month - 1]} {when.year} "
+                f"{when:%H:%M:%S} +0000</pubDate>")
+
+    return re.sub(r"<pubDate>[^<]*</pubDate>", anchor, text).encode()
