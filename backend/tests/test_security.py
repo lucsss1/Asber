@@ -178,6 +178,11 @@ def test_a09_secrets_never_reach_the_logs(settings, caplog):
     ("/api/vulnerabilities", {"window": "'; DROP TABLE x;--"}),
     ("/api/vulnerabilities", {"sort": "../../etc/passwd"}),
     ("/api/attack/objects", {"type": "../../etc"}),
+    ("/api/detection/rules", {"sort": "../../etc/passwd"}),
+    ("/api/detection/rules", {"level": "' OR '1'='1"}),
+    ("/api/detection/rules", {"status": "<script>alert(1)</script>"}),
+    ("/api/detection/rules/not-a-number", {}),
+    ("/api/detection/rules/0", {}),
     ("/api/search", {"q": "a"}),
     ("/api/vulnerabilities/not-a-cve", {}),
     ("/api/vulnerabilities/CVE-1", {}),
@@ -222,3 +227,43 @@ def test_a09_the_api_cannot_reach_the_internet_from_a_test(client):
     assert r.status_code == 404, (
         f"expected a cache miss, got {r.status_code} — the on-demand lookup reached the network"
     )
+# --------------------------------------------- A05: detection rules are inert
+def test_a05_sigma_parser_never_constructs_python_objects():
+    """``yaml.safe_load`` only.
+
+    The rule corpus is third-party content pulled from a release archive. With
+    ``yaml.load`` a crafted ``!!python/object/apply`` tag in any one of three
+    thousand files would execute on ingest.
+    """
+    from app.services import sigma
+    with pytest.raises(sigma.MalformedRule):
+        sigma.parse_rule("id: a\ntitle: t\nlevel: !!python/object/apply:os.system ['id']\n")
+
+
+def test_a05_rule_bodies_are_stored_as_text_not_evaluated():
+    from app.services import sigma
+    row = sigma.parse_rule(
+        "id: a\ntitle: t\ndetection:\n    sel:\n        Image|endswith: '\\cmd.exe'\n    condition: sel\n")
+    assert isinstance(row["detection"], str)
+
+
+def test_a05_sigma_query_injection_through_a_technique_id_is_inert(client):
+    """The technique filter resolves through a bound parameter, not a string."""
+    r = client.get("/api/detection/rules", params={"technique": "T1190'; DROP TABLE detection_rules;--"})
+    assert r.status_code == 200 and r.json()["total"] == 0
+
+
+def test_a10_hostile_archive_is_refused_before_it_is_read():
+    """A zip bomb must be a rejected run, not a memory incident."""
+    import io
+    import zipfile
+
+    from app.services.normalize import MalformedRecord
+    from app.workers.sigma import iter_rules
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for i in range(400):
+            z.writestr(f"rules/{i}.yml", "x" * 200_000)
+    with pytest.raises(MalformedRecord):
+        list(iter_rules(buf.getvalue()))

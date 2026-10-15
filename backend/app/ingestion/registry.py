@@ -202,8 +202,9 @@ SOURCE_REGISTRY: list[SourceDef] = [
         key="sigma", name="SigmaHQ rules",
         homepage="https://sigmahq.io/", endpoint="https://api.github.com/repos/SigmaHQ/sigma/releases/latest",
         category="detection", source_type="Community Detection Rules (curated)", tier=2, method="git",
-        interval=6 * HOUR, phase=2, enabled_by_default=False, worker=None,
-        notes="Phase 2: download release rule archive, parse YAML (no execution), map tags attack.tXXXX.",
+        interval=6 * HOUR, phase=2, enabled_by_default=False, worker="sigma",
+        max_bytes=40 * 1024 * 1024,
+        notes="Rule archive from the latest release; YAML parsed as data, never executed. attack.tXXXX and cve.YYYY-NNNN tags become explicit edges.",
     ),
     SourceDef(
         key="yara", name="YARA (VirusTotal)",

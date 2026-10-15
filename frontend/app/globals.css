@@ -1272,3 +1272,20 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   .asset-tabs { gap: var(--space-2); }
   .asset-tab { margin-right: var(--space-3); }
 }
+
+/* ---------------------------------------------------------------- detection
+   A rule's description is prose in a dense table: it is clamped rather than
+   folded, because the title already carries the meaning and the sentence is
+   context, not content you open. */
+.desc-cell {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; margin-top: var(--space-1); font-size: 13px; line-height: 19px;
+}
+
+/* The sentence under a lead number: body size and a bounded measure, so the
+   number above keeps the display register to itself. Putting the whole
+   explanation in the lead left a period orphaned at the start of a line. */
+.lead-sub {
+  margin-top: var(--space-2); max-width: 68ch;
+  font-size: 14px; line-height: 21px; color: var(--ink-2);
+}

@@ -114,6 +114,21 @@ Unique `(source_key, external_id)` — EDB id, or `owner/repo` for GitHub.
 `kind` ∈ `exploit` \| `poc` \| `scanner` \| `detection` \| `repository`;
 plus platform, type, author, `verified`, `stars`, `language`, `cve_ids`, `tier`.
 
+## `detection_rules` — Sigma rules, stored inert
+
+Unique `(source_key, external_id)` — the rule's own uuid for Sigma. Stores
+`title`, `description`, `status`, `level`, `logsource`, `tags`, `techniques`,
+`cve_ids`, `author` and `release`, plus `detection`: the rule body, normalised
+back to YAML and **never compiled, loaded or executed**. The body is kept so a
+reader can interrogate what "covered" actually means.
+
+Correlation is not stored here. A rule's `attack.tXXXX` and `cve.YYYY-NNNN`
+tags become `entity_links` rows with `subject_type = 'rule'` and
+`relation = 'detects'`, `method = 'explicit'`, evidence naming the tag. ATT&CK
+edges are keyed by **STIX id**, like every other ATT&CK edge — resolving the
+tag must constrain `obj_type = 'technique'`, because ATT&CK carries the same
+`external_id` on the technique and on the course-of-action that mitigates it.
+
 ## `attack_objects` / `attack_relationships`
 
 Local MITRE ATT&CK copy keyed by STIX id. `obj_type` ∈ technique, tactic, group,

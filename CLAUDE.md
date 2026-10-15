@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **244 backend**, **8 frontend**):
+Tests (currently **282 backend**, **8 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -176,6 +176,13 @@ to make:
   and dropped: on a 447-document corpus it would have added **one** document
   that was not already arriving through a CVE link. Security writing names the
   CVE, so the existing link already carries the signal. See `ROADMAP.md`.
-- **Phase 2's remaining sources.** `sigma`, `yara`, `malwarebazaar`, `otx`,
-  `urlhaus` and `virustotal` still have no worker, and `/detection` and
-  `/iocs` wait on them. See `ROADMAP.md`.
+- **Where YARA rules would come from.** The registered endpoint is
+  `VirusTotal/yara`, the **engine** repository — its latest release ships zero
+  assets, so ingesting it would only report that a version exists. Real rules
+  live in third-party curated repositories of varying quality. That is a
+  sourcing decision, not an implementation one: it would be the first source
+  Asber carries that nobody authoritative publishes. See `ROADMAP.md`.
+- **Phase 2's IOC half.** `malwarebazaar`, `urlhaus`, `otx` and `virustotal`
+  still have no worker, and `/iocs` waits on them. The two abuse.ch CSV dumps
+  are public (verified 200 without a key); `otx` and `virustotal` need
+  credentials that are not configured. See `ROADMAP.md`.

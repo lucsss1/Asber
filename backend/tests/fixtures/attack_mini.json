@@ -102,6 +102,14 @@
       "external_references": [{"source_name": "mitre-attack", "external_id": "M1051", "url": "https://attack.mitre.org/mitigations/M1051"}]
     },
     {
+      "type": "course-of-action",
+      "id": "course-of-action--t1190-mitigation",
+      "name": "Exploit Public-Facing Application Mitigation",
+      "description": "ATT&CK carries this mitigation under the same external_id as the technique it mitigates. Resolving T1190 without constraining obj_type picks whichever row comes back first.",
+      "modified": "2026-03-01T00:00:00.000Z",
+      "external_references": [{"source_name": "mitre-attack", "external_id": "T1190", "url": "https://attack.mitre.org/mitigations/T1190"}]
+    },
+    {
       "type": "x-mitre-data-component",
       "id": "x-mitre-data-component--network-traffic",
       "name": "Network Traffic Content",
