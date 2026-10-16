@@ -16,7 +16,7 @@ from app.workers.exploitdb import ExploitDbWorker
 from app.workers.feed import FeedWorker
 from app.workers.github import GithubWorker
 from app.workers.nvd import NvdWorker
-from tests.conftest import fixture, kev_fixture, research_fixture
+from tests.conftest import exploitdb_fixture, fixture, kev_fixture, research_fixture
 from tests.test_workers import ATTACK_INDEX, BUNDLE_URL, EDB_URL, KEV_URL, attack_index
 
 NOW = datetime(2026, 9, 16, tzinfo=timezone.utc)
@@ -27,7 +27,7 @@ def full_pipeline(router, http, session_maker, settings):
     router.add(BUNDLE_URL, fixture("attack_mini.json"))
     router.add(KEV_URL, kev_fixture())
     router.add("https://services.nvd.nist.gov/rest/json/cves/2.0", fixture("nvd_cves.json"))
-    router.add(EDB_URL, fixture("exploitdb.csv"))
+    router.add(EDB_URL, exploitdb_fixture())
     router.add(REGISTRY_BY_KEY["unit42"].endpoint, research_fixture())
     router.add("https://api.github.com/search/repositories", fixture("github_search.json"))
     from app.workers.mitre_attack import MitreAttackWorker

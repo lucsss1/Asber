@@ -202,3 +202,23 @@ def test_a10_malformed_source_payload_does_not_abort_the_run(router, http, sessi
     router.add(KEV_URL, b'{"vulnerabilities": [{"cveID": "BROKEN"}, {"cveID": "also-broken"}]}')
     run = run_worker(CisaKevWorker(), session_maker, http, settings)
     assert run.status == "success" and run.items_new == 0  # skipped, not crashed
+
+
+# ------------------------------------------- A09: the suite itself is offline
+def test_a09_the_api_cannot_reach_the_internet_from_a_test(client):
+    """An unknown CVE must 404 from the cache, never from a live lookup.
+
+    Workers get their HTTP client injected, so a mock transport covers them.
+    The API's on-demand NVD lookup built its own client in a module global and
+    escaped that, which meant every request for an unknown CVE in the suite hit
+    the live NVD. It broke on 2026-10-15 with no code change, when
+    CVE-2026-99999 was actually assigned and the lookup started succeeding.
+
+    If this fails, the suite has started talking to the internet again, and
+    every result it reports is a statement about the world rather than about
+    the code.
+    """
+    r = client.get("/api/vulnerabilities/CVE-2031-45678")
+    assert r.status_code == 404, (
+        f"expected a cache miss, got {r.status_code} — the on-demand lookup reached the network"
+    )
