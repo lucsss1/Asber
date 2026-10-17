@@ -183,6 +183,10 @@ def test_a09_secrets_never_reach_the_logs(settings, caplog):
     ("/api/detection/rules", {"status": "<script>alert(1)</script>"}),
     ("/api/detection/rules/not-a-number", {}),
     ("/api/detection/rules/0", {}),
+    ("/api/iocs/lookup", {"q": "' OR '1'='1"}),
+    ("/api/iocs/lookup", {"q": "<script>alert(1)</script>"}),
+    ("/api/iocs/indicators", {"kind": "../../etc/passwd"}),
+    ("/api/iocs/indicators", {"window": "'; DROP TABLE indicators;--"}),
     ("/api/search", {"q": "a"}),
     ("/api/vulnerabilities/not-a-cve", {}),
     ("/api/vulnerabilities/CVE-1", {}),
@@ -267,3 +271,81 @@ def test_a10_hostile_archive_is_refused_before_it_is_read():
             z.writestr(f"rules/{i}.yml", "x" * 200_000)
     with pytest.raises(MalformedRecord):
         list(iter_rules(buf.getvalue()))
+
+
+# ------------------------------- A05/A10: indicators are stored, never acted on
+def test_a05_indicator_lookup_is_parameterised(client):
+    """A hash-shaped injection must find nothing, not everything."""
+    payload = "a" * 63 + "'"
+    r = client.get("/api/iocs/lookup", params={"q": payload})
+    # Not an indicator at all, so it is rejected before any query runs.
+    assert r.status_code == 400 and "Traceback" not in r.text
+
+
+def test_a05_a_url_indicator_is_never_requested(monkeypatch):
+    """Storing a malicious URL must not fetch it.
+
+    The worker parses a dump; nothing in its path opens a connection to the
+    URLs inside. This asserts the parser is pure: given a row, it returns a
+    dict and touches no transport.
+    """
+    from app.ingestion import http as http_module
+    from app.workers.abusech import UrlhausWorker
+
+    def explode(*args, **kwargs):
+        raise AssertionError("the worker opened a connection while parsing a row")
+
+    monkeypatch.setattr(http_module.HttpClient, "get", explode)
+    row = UrlhausWorker().parse({
+        "url": "http://evil.example.test/payload.bin", "dateadded": "2026-01-01 00:00:00",
+        "url_status": "online", "threat": "malware_download", "tags": "elf",
+        "urlhaus_link": "https://urlhaus.abuse.ch/url/1/", "reporter": "x",
+    })
+    assert row["value"] == "http://evil.example.test/payload.bin"
+
+
+def test_a05_malware_download_stays_off_and_nothing_reads_a_sample():
+    """No code path here downloads a sample, so there is nothing to gate.
+
+    If a future change adds one, this fails: the worker module must not learn
+    the words that would fetch a binary.
+    """
+    import ast
+    import pathlib
+
+    tree = ast.parse(pathlib.Path("app/workers/abusech.py").read_text(encoding="utf-8"))
+    imported = {
+        alias.name.split(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+        for alias in (node.names if isinstance(node, ast.Import) else node.names)
+    } | {
+        node.module.split(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module
+    }
+    # Read from the AST rather than the text, so the module can name the flag
+    # in a docstring while still proving it imports nothing that could fetch
+    # or unpack a binary.
+    for forbidden in ("subprocess", "zipfile", "tarfile", "shutil", "requests", "urllib"):
+        assert forbidden not in imported, f"abusech.py now imports {forbidden!r}"
+    opens = [
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "open"
+    ]
+    assert not opens, "abusech.py now opens a file"
+
+
+def test_a10_a_dump_whose_header_moved_fails_loudly(router, http, session_maker, settings):
+    """abuse.ch requiring an Auth-Key would serve an error page, not a CSV.
+
+    That must be a failed run, not thirty thousand rows of HTML stored as
+    indicators.
+    """
+    from app.ingestion.base import run_worker
+    from app.ingestion.registry import REGISTRY_BY_KEY
+    from app.workers.abusech import UrlhausWorker
+
+    router.add(REGISTRY_BY_KEY["urlhaus"].endpoint, b"<html><body>401 Unauthorized</body></html>")
+    run = run_worker(UrlhausWorker(), session_maker, http, settings)
+    assert run.status == "error" and run.items_new == 0

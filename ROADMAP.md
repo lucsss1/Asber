@@ -68,6 +68,24 @@ flagged as actively exploited** — detection gets written for what is actually
 being exploited. So the ATT&CK mapping carries the volume and the CVE link,
 though sparse, lands entirely on the part of the corpus that matters.
 
+### abuse.ch — done
+
+Shipped. `malwarebazaar` and `urlhaus` read the public CSV dumps (the APIs now
+require an Auth-Key; the dumps do not, verified 200 without one). Metadata
+only: no sample is downloaded and no URL is requested.
+
+`/iocs` is a **lookup**, not the listing this roadmap originally described.
+That changed because of what the measurement showed: 33,784 indicators, of
+which 627 resolve to an ATT&CK family. A list of thirty thousand URLs answers
+no operational question for a reader with no SIEM to block them in and no logs
+to cross them against. "I have this hash from an alert, is it known?" is a
+question these feeds can answer offline, so that is the page.
+
+One trap found by measuring: `PS1` is a real ATT&CK malware id (S0613) *and*
+the extension URLhaus tags every PowerShell script with. Resolving tags
+naively made it a fifth of all matches. File-format tags are now excluded from
+family candidacy.
+
 ### YARA — not what the registry says it is
 
 The registered endpoint is `VirusTotal/yara`, the **engine** repository. Its
