@@ -433,3 +433,53 @@ class EnvironmentMatch(Base):
     evidence: Mapped[str | None] = mapped_column(Text)
     exposure: Mapped[int] = mapped_column(Integer, default=0)
     matched_at: Mapped[datetime] = mapped_column(TZ, default=utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Detection rules: Sigma (and, later, YARA)
+# ---------------------------------------------------------------------------
+class DetectionRule(Base):
+    """A published detection rule, stored as text and never executed.
+
+    The rule's own logic lives in ``detection`` as the YAML it arrived as. It
+    is kept verbatim because the point of the page is that the reader can
+    interrogate the verdict: "there is a rule for this" is worth nothing if you
+    cannot read what the rule actually looks for. It is parsed as data and
+    never compiled, loaded or run.
+
+    Correlation does not live here. A rule's ATT&CK techniques and CVEs are
+    written to ``entity_links`` like every other edge, with the tag that
+    produced them as evidence, so they are explainable the same way and can be
+    queried through the same graph.
+    """
+    __tablename__ = "detection_rules"
+    __table_args__ = (UniqueConstraint("source_key", "external_id", name="uq_detection_rule"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_key: Mapped[str] = mapped_column(String(64), index=True)
+    #: the rule's own uuid for Sigma; stable across renames and moves
+    external_id: Mapped[str] = mapped_column(String(300))
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(Text)
+    #: sigma|yara
+    rule_format: Mapped[str] = mapped_column(String(16), default="sigma", index=True)
+    #: stable|test|experimental|deprecated|unsupported — upstream's own word
+    status: Mapped[str | None] = mapped_column(String(32), index=True)
+    #: informational|low|medium|high|critical
+    level: Mapped[str | None] = mapped_column(String(32), index=True)
+    #: what the rule needs to be fed: category/product/service
+    logsource: Mapped[dict] = mapped_column(default=dict)
+    #: the detection body, verbatim and inert
+    detection: Mapped[str | None] = mapped_column(Text)
+    falsepositives: Mapped[list] = mapped_column(default=list)
+    references: Mapped[list] = mapped_column(default=list)
+    tags: Mapped[list] = mapped_column(default=list)
+    techniques: Mapped[list] = mapped_column(default=list)
+    cve_ids: Mapped[list] = mapped_column(default=list)
+    author: Mapped[str | None] = mapped_column(String(300))
+    #: which upstream release this row came from, so a re-release is visible
+    release: Mapped[str | None] = mapped_column(String(64))
+    tier: Mapped[int] = mapped_column(Integer, default=2)
+    published_at: Mapped[datetime | None] = mapped_column(TZ, index=True)
+    collected_at: Mapped[datetime] = mapped_column(TZ, default=utcnow, index=True)

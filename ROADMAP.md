@@ -47,6 +47,38 @@ SOURCES_ENABLED=msrc,mandiant,sentinellabs,crowdstrike,qualys,project_zero
 They have never been run here, so expect the ordinary first-contact problems —
 a feed that moved, a field the parser did not anticipate — not missing code.
 
+### Sigma — done
+
+Shipped. `sigma_all_rules.zip` from the latest release, parsed as YAML and
+never executed, into `detection_rules`; `attack.tXXXX` and `cve.YYYY-NNNN` tags
+become explicit `entity_links` edges. `/detection` is live.
+
+Measured on release r2026-07-01 before any of it was built, which is what set
+the shape:
+
+| | `core` | `all_rules` |
+|---|---|---|
+| rules | 1,377 | 3,302 |
+| with an ATT&CK technique tag | 1,244 | 2,877 |
+| with a CVE tag | 13 | 193 |
+
+`all_rules` was chosen for fifteen times the CVE coverage. Of the 140 distinct
+CVEs those tags name, **96 are in this corpus and all 96 are in CISA KEV and
+flagged as actively exploited** — detection gets written for what is actually
+being exploited. So the ATT&CK mapping carries the volume and the CVE link,
+though sparse, lands entirely on the part of the corpus that matters.
+
+### YARA — not what the registry says it is
+
+The registered endpoint is `VirusTotal/yara`, the **engine** repository. Its
+latest release ships zero assets: there are no rules there. Ingesting it would
+only report that version 4.5.8 exists.
+
+Real YARA rules live in third-party curated repositories of varying quality,
+which is a sourcing decision, not an implementation one: it is the first source
+Asber would carry that nobody authoritative publishes. **Open question for the
+owner.**
+
 ### The other half needs a worker each
 
 `build_worker` raises for these: they have no implementation.

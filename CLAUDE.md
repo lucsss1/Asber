@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **233 backend**, **8 frontend**):
+Tests (currently **282 backend**, **8 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -91,11 +91,17 @@ the instrument.
 The visual language is an instrument, not a publication. The rules are load
 bearing, not taste:
 
-- **Warm means threat, cool means interface.** Red, orange and amber belong to
-  the risk scale alone. If something warm is on screen, something is wrong. The
-  interface accent is cool so it can never be mistaken for an alarm.
-- **Two voices.** Sans (Inter) for everything you read and operate; mono (IBM
-  Plex Mono) **only for data you might copy or compare** — ids, dates, CVSS
+The visual world is pinned to [veilit.xyz](https://veilit.xyz/): a violet-black
+ground, one violet accent, amber for exposure, hard display tracking over small
+wide-tracked labels, and controls shaped as pills. The reference supplies the
+surface language; it does not get to touch the rules below.
+
+- **Warm means threat, cool means interface.** Amber and rose belong to the
+  risk scale alone. If something warm is on screen, something is wrong. The
+  accent is violet — still unmistakably cool — so it can never be mistaken for
+  an alarm.
+- **Two voices.** Sans (Geist) for everything you read and operate; mono (Geist
+  Mono) **only for data you might copy or compare** — ids, dates, CVSS
   vectors, scores. Mono is not decoration, and it does not set labels.
 - **Quiet at rest, deep on touch.** Less on screen by default; depth revealed
   in place. The threat table shows four columns and keeps the rest one press
@@ -136,6 +142,17 @@ The owner's technology inventory, matched against the corpus.
   announce itself. Verify migrations against a database Alembic actually built.
   The production database had no `alembic_version` row at all until it was
   stamped.
+- **Fixtures rot with the calendar.** Three tests went red on a date change
+  rather than a code change (KEV on 2026-10-10, the research feed on 10-15, the
+  Exploit-DB CSV on 10-16): a fixed date drifted out of the dashboard window and
+  an assertion that depended on it collapsed. Anchor dates to today through a
+  helper in `conftest`; `test_fixture_freshness.py` fails loudly if a fixture
+  grows an unanchored recent date.
+- **The suite used to call the live NVD.** Workers get their HTTP client
+  injected, but the API's on-demand CVE lookup built its own in a module global
+  and escaped every mock transport. `test_cve_detail_rejects_garbage` broke the
+  day CVE-2026-99999 was genuinely assigned. An autouse fixture now hands that
+  global a refusing transport.
 - **SQLite does not enforce foreign keys**, so `ON DELETE CASCADE` works in
   Postgres and silently does nothing under test. Delete dependent rows
   explicitly.
@@ -159,7 +176,13 @@ to make:
   and dropped: on a 447-document corpus it would have added **one** document
   that was not already arriving through a CVE link. Security writing names the
   CVE, so the existing link already carries the signal. See `ROADMAP.md`.
-- **The threat view does not group by asset.** With three assets the
-  environment already carries over a thousand matches, and the page lists CVEs
-  rather than "what is wrong with each thing I have". This gets unreadable
-  before it gets wrong.
+- **Where YARA rules would come from.** The registered endpoint is
+  `VirusTotal/yara`, the **engine** repository — its latest release ships zero
+  assets, so ingesting it would only report that a version exists. Real rules
+  live in third-party curated repositories of varying quality. That is a
+  sourcing decision, not an implementation one: it would be the first source
+  Asber carries that nobody authoritative publishes. See `ROADMAP.md`.
+- **Phase 2's IOC half.** `malwarebazaar`, `urlhaus`, `otx` and `virustotal`
+  still have no worker, and `/iocs` waits on them. The two abuse.ch CSV dumps
+  are public (verified 200 without a key); `otx` and `virustotal` need
+  credentials that are not configured. See `ROADMAP.md`.

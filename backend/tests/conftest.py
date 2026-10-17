@@ -106,6 +106,40 @@ def http(router) -> HttpClient:
     client.close()
 
 
+@pytest.fixture(autouse=True)
+def _no_real_network(monkeypatch):
+    """Keep the suite offline, including the paths that build their own client.
+
+    Every worker gets its HTTP client injected, so a test can hand it a mock
+    transport. The API's on-demand NVD lookup does not: ``_api_http`` builds a
+    real ``HttpClient`` in a module-level global, which no injected transport
+    can reach. The suite was therefore calling the live NVD on every request
+    for an unknown CVE.
+
+    That is how ``test_cve_detail_rejects_garbage`` broke on 2026-10-15 without
+    a line of code changing. It asserted that an obviously-invented id returns
+    404, and CVE-2026-99999 was genuinely assigned that day -- a Linux kernel
+    issue -- so the live lookup started succeeding and the endpoint answered
+    200. A test whose result depends on what the world published this morning
+    is not a test.
+
+    A real client over a refusing transport rather than a stub, so the whole
+    ``HttpClient`` interface stays intact: ``fetch_cve`` reaches for
+    ``rate_limiter`` before it ever calls ``get``, and a hand-rolled double
+    would only discover that by failing.
+    """
+
+    def refuse(request):
+        raise httpx.ConnectError(f"network is disabled in tests (tried {request.url})")
+
+    client = HttpClient("asber-test/1.0", timeout=1, max_retries=0,
+                        rate_limiter=RateLimiter(sleep=lambda _s: None, clock=lambda: 0.0),
+                        transport=httpx.MockTransport(refuse), sleep=lambda _s: None)
+    monkeypatch.setattr("app.api.vulnerabilities._http_client", client, raising=False)
+    yield
+    client.close()
+
+
 def kev_fixture(days_ago: tuple[int, ...] = (4, 9)) -> bytes:
     """The CISA KEV payload with its dates anchored to today.
 
@@ -135,6 +169,30 @@ def kev_fixture(days_ago: tuple[int, ...] = (4, 9)) -> bytes:
 _RFC822_DAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 _RFC822_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def exploitdb_fixture(days_ago: tuple[int, ...] = (5, 3)) -> bytes:
+    """The Exploit-DB CSV with its recent rows anchored to today.
+
+    Third instance of the same rot, found on 2026-10-16 when the 2026-09-11 row
+    crossed out of the 30-day window and ``test_dashboard_overview`` lost its
+    ``new_exploits`` count. The deliberately ancient row (1999) and the
+    deliberately malformed one are left alone: both exist to be skipped, and
+    that is what they test.
+    """
+    rows = fixture("exploitdb.csv").decode().splitlines()
+    today = datetime.now(timezone.utc).date()
+    offsets = iter(days_ago)
+    out = [rows[0]]
+    for row in rows[1:]:
+        cols = row.split(",")
+        # Only rows that are meant to be current get moved. 1999 is the "too
+        # old to count" case and `bad` is the malformed-id case.
+        if cols and cols[0].isdigit() and not row.startswith("9999,"):
+            fresh = (today - timedelta(days=next(offsets, 1))).isoformat()
+            row = re.sub(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", fresh, row)
+        out.append(row)
+    return ("\n".join(out) + "\n").encode()
 
 
 def research_fixture(days_ago: tuple[int, ...] = (3, 2)) -> bytes:

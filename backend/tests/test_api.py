@@ -138,7 +138,11 @@ def test_sources_health_and_runs(client):
     assert keys["cisa_kev"]["health"] == "ok" and keys["cisa_kev"]["tier"] == 1
     assert keys["cisa_kev"]["items_fetched"] > 0
     assert keys["otx"]["health"] == "disabled" and keys["otx"]["requires_auth"]
-    assert keys["sigma"]["implemented"] is False and keys["sigma"]["phase"] == 2
+    # Both sides of the contract: sigma has a worker now, yara still does not,
+    # and Source Health has to tell them apart rather than calling everything
+    # in phase 2 unimplemented.
+    assert keys["sigma"]["implemented"] is True and keys["sigma"]["phase"] == 2
+    assert keys["yara"]["implemented"] is False and keys["yara"]["phase"] == 2
     runs = client.get("/api/sources/cisa_kev/runs").json()["runs"]
     assert runs and runs[0]["status"] == "success" and runs[0]["duration_ms"] is not None
     assert client.get("/api/sources/nope/runs").status_code == 404
@@ -146,7 +150,8 @@ def test_sources_health_and_runs(client):
 
 def test_manual_trigger(client):
     assert client.post("/api/sources/cisa_kev/run").json()["queued"] is True
-    assert client.post("/api/sources/sigma/run").status_code == 400  # no worker yet
+    assert client.post("/api/sources/sigma/run").json()["queued"] is True  # has a worker now
+    assert client.post("/api/sources/yara/run").status_code == 400  # still no worker
     assert client.post("/api/sources/nope/run").status_code == 404
 
 
