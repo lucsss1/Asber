@@ -52,6 +52,8 @@ ANCHORED = {
     "cisa_kev.json": "kev_fixture()",
     "feed_research.xml": "research_fixture()",
     "exploitdb.csv": "exploitdb_fixture()",
+    "malwarebazaar.csv": "abusech_fixture()",
+    "urlhaus.csv": "abusech_fixture()",
 }
 
 

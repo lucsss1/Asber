@@ -129,6 +129,24 @@ edges are keyed by **STIX id**, like every other ATT&CK edge — resolving the
 tag must constrain `obj_type = 'technique'`, because ATT&CK carries the same
 `external_id` on the technique and on the course-of-action that mitigates it.
 
+## `indicators` — hashes, URLs and hosts published as malicious
+
+Unique `(source_key, kind, value_norm)`. Shaped for lookup, not listing:
+`value_norm` is the lowercased value and `host` is a URL's host on its own, so
+a host search finds every URL served from it and `related` lets one hash
+lookup answer for the sample's md5 and sha1 too.
+
+`family` is upstream's word; `attack_stix_id` is that family resolved to an
+ATT&CK software object, and is usually **null**. Measured on the recent dumps:
+627 of 33,784 rows resolve, across 19 families. Most do not, and the page says
+so rather than implying coverage — Mirai, the largest family present, is not in
+the Enterprise matrix at all. A tag that names a file format is never treated
+as a family: `PS1` is both a real ATT&CK id (S0613) and the extension URLhaus
+puts on every PowerShell script, and that one collision produced a fifth of all
+matches before it was excluded.
+
+No sample is ever downloaded and no URL is ever requested.
+
 ## `attack_objects` / `attack_relationships`
 
 Local MITRE ATT&CK copy keyed by STIX id. `obj_type` ∈ technique, tactic, group,

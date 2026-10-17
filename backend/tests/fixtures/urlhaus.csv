@@ -1,0 +1,9 @@
+################################################################
+# abuse.ch URLhaus Database Dump (CSV - recent URLs only)      #
+################################################################
+#
+# id,dateadded,url,url_status,last_online,threat,tags,urlhaus_link,reporter
+"3951098","2026-10-17 00:43:17","http://198.51.100.7:35633/bin.sh","online","2026-10-17 00:43:17","malware_download","32-bit,elf,mips,Mirai","https://urlhaus.abuse.ch/url/3951098/","geenensp"
+"3951097","2026-10-17 00:40:00","http://evil.example.test/a/payload.ps1","offline","2026-10-16 10:00:00","malware_download","ps1,RemcosRAT","https://urlhaus.abuse.ch/url/3951097/","reporter2"
+"3951096","2026-10-17 00:32:12","http://evil.example.test/b/second.bin","online","2026-10-17 00:32:12","malware_download","None","https://urlhaus.abuse.ch/url/3951096/","adliwahid"
+"3951095","2026-10-17 00:30:00","notaurl","online","2026-10-17 00:30:00","malware_download","zip","https://urlhaus.abuse.ch/url/3951095/","x"

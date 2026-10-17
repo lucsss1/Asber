@@ -1289,3 +1289,19 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   margin-top: var(--space-2); max-width: 68ch;
   font-size: 14px; line-height: 21px; color: var(--ink-2);
 }
+
+/* --------------------------------------------------------------------- iocs
+   The lookup is the page, so it gets the width and the weight. Everything
+   below it is context for a reader who has not pasted anything yet. */
+.lookup { display: flex; gap: var(--space-2); margin-bottom: var(--space-5); max-width: 720px; }
+.lookup input[type="search"] { flex: 1; font-family: var(--mono); font-size: 13.5px; }
+.lookup .btn { flex: none; }
+
+/* An indicator is something you copy, so it is mono and it wraps rather than
+   truncating — a half-shown hash is worse than a wrapped one. */
+.ioc-value { word-break: break-all; font-size: 13px; }
+.ioc-hit { padding: var(--space-4) 0; border-bottom: 1px solid var(--rule); }
+.ioc-hit:last-of-type { border-bottom: 0; }
+.ioc-hit-head { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-3); }
+.ioc-related { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.ioc-scope { margin-top: var(--space-3); }

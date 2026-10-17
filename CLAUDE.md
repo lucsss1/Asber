@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **282 backend**, **8 frontend**):
+Tests (currently **329 backend**, **8 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -182,7 +182,6 @@ to make:
   live in third-party curated repositories of varying quality. That is a
   sourcing decision, not an implementation one: it would be the first source
   Asber carries that nobody authoritative publishes. See `ROADMAP.md`.
-- **Phase 2's IOC half.** `malwarebazaar`, `urlhaus`, `otx` and `virustotal`
-  still have no worker, and `/iocs` waits on them. The two abuse.ch CSV dumps
-  are public (verified 200 without a key); `otx` and `virustotal` need
-  credentials that are not configured. See `ROADMAP.md`.
+- **`otx` and `virustotal` need credentials.** They are the last two Phase 2
+  sources without a worker, and neither key is configured. Both are free to
+  register. See `ROADMAP.md`.

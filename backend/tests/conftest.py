@@ -195,6 +195,26 @@ def exploitdb_fixture(days_ago: tuple[int, ...] = (5, 3)) -> bytes:
     return ("\n".join(out) + "\n").encode()
 
 
+def abusech_fixture(name: str, days_ago: tuple[int, ...] = (1, 2, 3, 4)) -> bytes:
+    """An abuse.ch CSV dump with its timestamps anchored to today.
+
+    Both dumps are rolling windows, and ``/api/iocs/indicators`` filters on
+    ``first_seen_at``, so a fixed date here would age out exactly the way the
+    KEV, research and Exploit-DB fixtures did. Anchored on the way in rather
+    than waiting for the fourth instance.
+    """
+    text = fixture(name).decode()
+    now = datetime.now(timezone.utc)
+    offsets = iter(days_ago)
+
+    def anchor(_match) -> str:
+        when = now - timedelta(days=next(offsets, 1))
+        return when.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Only the leading timestamp of each data row moves; the banner has none.
+    return re.sub(r"20[0-9]{2}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", anchor, text).encode()
+
+
 def research_fixture(days_ago: tuple[int, ...] = (3, 2)) -> bytes:
     """The research feed with its ``pubDate`` values anchored to today.
 
