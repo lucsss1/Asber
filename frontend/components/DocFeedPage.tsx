@@ -1,4 +1,5 @@
 import { apiSafe, type Doc, type Paged } from "@/lib/api";
+import { num } from "@/lib/format";
 import {
   ClearFilters,
   PillSelect,
@@ -70,7 +71,7 @@ export async function DocFeedPage({
         <div className="notice notice-danger">API unavailable.</div>
       ) : (
         <>
-          <Panel title={`${data.total.toLocaleString()} article${data.total === 1 ? "" : "s"}`}>
+          <Panel title={`${num(data.total)} article${data.total === 1 ? "" : "s"}`}>
             <DocList docs={data.items} />
           </Panel>
           <Pagination total={data.total} page={data.page} pageSize={data.page_size} params={sp} base={base} />

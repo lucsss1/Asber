@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Doc, ExploitItem, Reason, SourceInfo, Vuln } from "@/lib/api";
-import { PLATFORM_LABELS, fmtDate, relative, riskLabel, riskLevel, severityClass, tierLabel, vulnLabel } from "@/lib/format";
+import { PLATFORM_LABELS, fmtDate, num, relative, riskLabel, riskLevel, severityClass, tierLabel, vulnLabel } from "@/lib/format";
 import { IconExternal } from "@/components/icons";
 import { ThreatRows } from "@/components/ThreatRows";
 import { Pending } from "@/components/Pending";
@@ -222,7 +222,15 @@ export function ThreatTable({ items }: { items: Vuln[] }) {
           <th style={{ width: 104 }}>Activity</th>
         </tr>
       </thead>
-      <ThreatRows items={items} />
+      {/* The activity text is formatted here, on the server, and handed over
+          as a string. ThreatRows is a client component, so anything it derives
+          from Date.now() during render is computed twice — once to produce the
+          HTML and again to hydrate it — and the two disagree the moment a
+          boundary is crossed in between. A row that said "59 min ago" when the
+          page was built says "1h ago" a second later, React sees different
+          text than it sent, and it throws away the hydration for that subtree.
+          One clock decides, and the mismatch cannot happen. */}
+      <ThreatRows items={items} activity={items.map((v) => relative(v.last_activity_at))} />
     </table>
   );
 }
@@ -337,7 +345,7 @@ export function Pagination({
   return (
     <nav className="pagination">
       <span>
-        Page {page} of {pages.toLocaleString()}
+        Page {page} of {num(pages)}
       </span>
       <span className="row">
         {page > 1 ? (

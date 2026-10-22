@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **329 backend**, **8 frontend**):
+Tests (currently **329 backend**, **11 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -148,6 +148,16 @@ The owner's technology inventory, matched against the corpus.
   an assertion that depended on it collapsed. Anchor dates to today through a
   helper in `conftest`; `test_fixture_freshness.py` fails loudly if a fixture
   grows an unanchored recent date.
+- **`toLocaleString()` renders differently on each side.** With no locale it
+  follows whoever runs it: `en-US` in the server container, the operating
+  system's regional settings in Chromium — "2,149" against "2.149" on a
+  machine set to Brazil, even while `navigator.language` reports `en-US`. In a
+  client component that is a hydration mismatch (React #418, which discards
+  the subtree and leaves its controls briefly dead); across components it just
+  makes one screen disagree with itself. Use `num()`. Anything a client
+  component derives from `Date.now()` during render has the same shape of
+  problem — format on the server and pass the string down.
+  `frontend/lib/hydration.test.ts` fails on both.
 - **The suite used to call the live NVD.** Workers get their HTTP client
   injected, but the API's on-demand CVE lookup built its own in a module global
   and escaped every mock transport. `test_cve_detail_rejects_garbage` broke the

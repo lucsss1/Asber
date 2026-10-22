@@ -1,3 +1,24 @@
+/** A grouped number, formatted the same way on both sides of the wire.
+ *
+ *  `toLocaleString()` with no locale follows whoever is running it. In the
+ *  server container that is `en-US` and yields `2,149`; Chromium follows the
+ *  operating system's regional settings rather than `navigator.language`, so
+ *  on a machine set to Brazil the same call yields `2.149` even while the
+ *  browser reports itself as `en-US`.
+ *
+ *  Two consequences, and the second is the one that bit. The same screen
+ *  showed both forms to the same reader. And in a client component the string
+ *  is produced twice — once to render the HTML, once to hydrate it — so the
+ *  two disagreed and React threw #418 and discarded the hydration.
+ *
+ *  `fmtDate` already pinned its locale and its timezone for exactly this
+ *  reason. Numbers were missed.
+ */
+export function num(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return value.toLocaleString("en-US");
+}
+
 export function fmtDate(value?: string | null): string {
   if (!value) return "—";
   const d = new Date(value);

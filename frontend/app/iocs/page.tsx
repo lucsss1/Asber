@@ -3,7 +3,7 @@ import Link from "next/link";
 import { apiSafe, type Paged } from "@/lib/api";
 import { one, type SP } from "@/components/Filters";
 import { Empty, PageHead, Pagination, Panel } from "@/components/ui";
-import { relative } from "@/lib/format";
+import { num, relative } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -103,11 +103,11 @@ export default async function IocsPage({ searchParams }: { searchParams: Promise
       {!q ? (
         <>
           <p className="lead-sub">
-            <b>{overview.total.toLocaleString()}</b> indicators from{" "}
+            <b>{num(overview.total)}</b> indicators from{" "}
             {Object.entries(overview.by_source)
-              .map(([k, n]) => `${SOURCE_LABEL[k] ?? k} (${n.toLocaleString()})`)
+              .map(([k, n]) => `${SOURCE_LABEL[k] ?? k} (${num(n)})`)
               .join(" and ")}
-            . {overview.attack_resolved.toLocaleString()} name a malware family ATT&CK also
+            . {num(overview.attack_resolved)} name a malware family ATT&CK also
             carries, across {overview.attack_families}. Most do not: a feed names what it sees,
             and the Enterprise matrix does not cover everything seen — Mirai, the largest family
             here, is absent from it entirely.

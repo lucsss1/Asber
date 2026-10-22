@@ -1,5 +1,5 @@
 import { apiSafe, type SourceHealth } from "@/lib/api";
-import { duration, fmtDateTime, relative, tierLabel } from "@/lib/format";
+import { duration, fmtDateTime, num, relative, tierLabel } from "@/lib/format";
 import { Empty, Ext, PageHead, Panel } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
 
@@ -78,11 +78,11 @@ export default async function SourcesPage() {
               <div className="health-meta">
                 {/* a conditional-GET 304 fetches nothing, which is success, not an empty result */}
                 {s.items_fetched ? (
-                  <span>{s.items_fetched.toLocaleString()} items</span>
+                  <span>{num(s.items_fetched)} items</span>
                 ) : (
                   <span>no change last sync</span>
                 )}
-                {s.items_new ? <span>{s.items_new.toLocaleString()} new</span> : null}
+                {s.items_new ? <span>{num(s.items_new)} new</span> : null}
                 {s.latency_ms ? <span>{s.latency_ms} ms</span> : null}
               </div>
               {s.last_error ? (

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import type { Vuln } from "@/lib/api";
-import { relative, vulnLabel } from "@/lib/format";
+import { vulnLabel } from "@/lib/format";
 import { Risk, Signals } from "@/components/ui";
 import { RowDetail } from "@/components/RowDetail";
 
@@ -17,13 +17,20 @@ import { RowDetail } from "@/components/RowDetail";
  *
  * Opening a row does not navigate. That matters: the comparison you were in
  * the middle of making is still on screen underneath.
+ *
+ * ``activity`` arrives already formatted rather than being derived here. This
+ * is a client component, so a string computed from ``Date.now()`` during
+ * render is computed twice — once to produce the HTML, again to hydrate it —
+ * and the two disagree as soon as a minute boundary falls between them. That
+ * shipped: the Overview threw React #418 and discarded the hydration for this
+ * subtree, which leaves the rows briefly unpressable. One clock decides now.
  */
-export function ThreatRows({ items }: { items: Vuln[] }) {
+export function ThreatRows({ items, activity }: { items: Vuln[]; activity: string[] }) {
   const [open, setOpen] = useState<string | null>(null);
 
   return (
     <tbody>
-      {items.map((v) => {
+      {items.map((v, i) => {
         const isOpen = open === v.cve_id;
         return (
           <Fragment key={v.cve_id}>
@@ -53,7 +60,7 @@ export function ThreatRows({ items }: { items: Vuln[] }) {
               <td>
                 <Signals v={v} />
               </td>
-              <td className="nowrap faint">{relative(v.last_activity_at)}</td>
+              <td className="nowrap faint">{activity[i]}</td>
             </tr>
             <tr className="row-detail" aria-hidden={!isOpen}>
               <td colSpan={4}>

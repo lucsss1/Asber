@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { apiSafe, type AttackItem, type Doc, type ExploitItem, type Vuln } from "@/lib/api";
-import { fmtDateTime } from "@/lib/format";
+import { fmtDateTime, num } from "@/lib/format";
 import { Segmented, WINDOW_OPTIONS, one, type SP } from "@/components/Filters";
 import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
@@ -147,7 +147,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           const value = data.cards[m.key] ?? 0;
           return (
             <Link key={m.key} href={m.href} className={`metric${value === 0 ? " is-zero" : ""}`}>
-              <b>{value.toLocaleString()}</b>
+              <b>{num(value)}</b>
               {m.label}
               <Pending />
             </Link>
