@@ -64,6 +64,20 @@
   --risk-medium: #ffd391;
   --risk-low: var(--ink-3);
 
+  /* Severity as a FILL, which is a different job from severity as ink. The
+     --risk-* tokens above are tuned to clear 4.5:1 as text; used as chart
+     fills in the Paper theme they came out mustard and olive. These are one
+     hue stepping monotonically in lightness, which is what an ordered scale
+     needs and what two hues cannot give: High reads as less than Critical and
+     more than Medium by its position on the ramp rather than by being a
+     different colour. Checked for monotonicity, not eyeballed. The two palest
+     Paper steps fall below 3:1 against white, which is why every bar carries a
+     visible label — that relief is required, not optional. */
+  --fill-critical: #ff6b86;
+  --fill-high: #d65570;
+  --fill-medium: #9c5464;
+  --fill-low: #625d70;
+
   /* collector state, always paired with a word */
   --ok: #7ee2b8;
   --warn: #ffb547;
@@ -127,6 +141,10 @@
     --on-critical: #ffffff;
     --risk-high: #8a5006;
     --risk-medium: #6f5520;
+    --fill-critical: #c31233;
+    --fill-high: #cf4f63;
+    --fill-medium: #d98b96;
+    --fill-low: #b9b2bd;
     --ok: #0d6b48;
     --warn: #8a5a00;
     --shadow-float: 0 0 0 1px #05041926, var(--edge), 0 20px 60px -24px #4b2fc959, 0 8px 28px #14101f1a;
@@ -1305,3 +1323,84 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 .ioc-hit-head { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-3); }
 .ioc-related { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
 .ioc-scope { margin-top: var(--space-3); }
+
+/* ------------------------------------------------------------------ charts
+   Thin marks, recessive chrome, and every value labelled. A chart here is an
+   instrument reading, so the ink belongs to the text tokens and the colour
+   belongs to the mark beside it — never to the number. */
+.chart-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5) var(--space-6); margin-bottom: var(--space-6);
+}
+.chart { margin: 0; min-width: 0; }
+.chart-title {
+  display: flex; align-items: baseline; gap: var(--space-2); margin-bottom: var(--space-4);
+  font-size: 11px; font-weight: 600; color: var(--ink-3);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.chart-sub { font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+
+/* donut */
+.chart-donut { display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; }
+.chart-donut svg { width: 136px; height: 136px; flex: none; overflow: visible; }
+.chart-centre-value {
+  text-anchor: middle; fill: var(--ink); font-family: var(--mono);
+  font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums;
+  letter-spacing: var(--track-title);
+}
+.chart-centre-label {
+  text-anchor: middle; fill: var(--ink-3); font-size: 10px;
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.chart-key { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; min-width: 0; }
+.chart-key li { display: flex; align-items: baseline; gap: var(--space-2); font-size: 13px; }
+.chart-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; translate: 0 -1px; }
+.chart-key-label { color: var(--ink-2); }
+.chart-key-value {
+  margin-left: auto; font-family: var(--mono); font-weight: 500;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+
+/* columns */
+.chart-columns {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: var(--space-3); align-items: end; height: 150px;
+}
+.chart-col { display: grid; grid-template-rows: auto 1fr auto; height: 100%; min-width: 0; gap: 6px; }
+.chart-col-value {
+  font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink);
+  font-variant-numeric: tabular-nums; text-align: center;
+}
+.chart-col-hot { color: var(--risk-critical); }
+.chart-col-track { display: flex; align-items: flex-end; min-height: 0; }
+/* The 4px rounded end is on the data end only; the base stays square so the
+   bar is anchored to its baseline rather than floating. */
+.chart-col-fill {
+  width: 100%; min-height: 2px; border-radius: 4px 4px 0 0;
+  transition: height 260ms var(--ease-out);
+}
+.chart-col-label {
+  font-size: 11px; color: var(--ink-3); text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) { .chart-col-fill { transition: none; } }
+
+/* The figures a chart would have told a lie about: 4 of 2,559 is a sliver on a
+   meter and a sentence in a figure. */
+.figures {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--space-6);
+}
+.figure { padding: var(--space-4) var(--space-4) var(--space-4) 0; border-left: 1px solid var(--rule); padding-left: var(--space-4); }
+.figure:first-child { border-left: 0; padding-left: 0; }
+.figure-value {
+  font-family: var(--mono); font-size: 26px; font-weight: 500; color: var(--ink);
+  font-variant-numeric: tabular-nums lining-nums; letter-spacing: var(--track-title);
+}
+.figure.hot .figure-value { color: var(--risk-critical); }
+.figure-label {
+  font-size: 11px; font-weight: 600; color: var(--ink-3); margin-top: var(--space-1);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.figure-of { font-size: 12px; color: var(--ink-3); margin-top: 2px; font-variant-numeric: tabular-nums; }

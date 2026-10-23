@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **329 backend**, **11 frontend**):
+Tests (currently **335 backend**, **12 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -111,6 +111,14 @@ surface language; it does not get to touch the rules below.
 - Motion follows the animation gate: press feedback and state changes yes;
   entry choreography on anything read dozens of times a day, no. The command
   palette has **no** open animation on purpose.
+
+- **Charts measure before they draw.** Three candidates for the Overview were
+  dropped because the numbers said a chart would show nothing (exploit
+  availability is 2,532/17/10; detection coverage is 4 of 2,559) — those are
+  figures. Severity is an ordered scale, so its bars are a single hue stepping
+  monotonically in lightness (`--fill-*`), not the `--risk-*` ink tokens, which
+  are tuned for text contrast and come out mustard as fills. Categorical chart
+  hues are validated with the dataviz skill's script, not by eye.
 
 Full tokens and the reasoning live at the top of `frontend/app/globals.css`.
 

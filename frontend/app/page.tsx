@@ -7,8 +7,18 @@ import { IconAlert } from "@/components/icons";
 import { Pending } from "@/components/Pending";
 import { Fold } from "@/components/Fold";
 import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
+import { AssetColumns, Figure, SeverityColumns, VerdictDonut } from "@/components/Charts";
 
 export const dynamic = "force-dynamic";
+
+interface Summary {
+  environment: { id: number; name: string; assets: number };
+  reaching: number;
+  verdict: { state: string; label: string; count: number }[];
+  severity: { severity: string; count: number }[];
+  assets: { id: number; label: string; product: string; affected: number; possibly_affected: number }[];
+  figures: { in_kev: number; has_public_exploit: number; has_detection_rule: number; total: number };
+}
 
 interface Overview {
   window: string;
@@ -86,9 +96,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   // Only owners see this, and only when something is registered: an empty
   // card would be an advert for a feature on a page that answers a question.
-  const rampart = (await canSeeRampart())
-    ? await apiSafe<EnvironmentView>("/api/rampart/environment")
-    : null;
+  const owner = await canSeeRampart();
+  const [rampart, summary] = owner
+    ? await Promise.all([
+        apiSafe<EnvironmentView>("/api/rampart/environment"),
+        apiSafe<Summary>("/api/summary/environment"),
+      ])
+    : [null, null];
 
   const unhealthy = data.source_health.errors.length + data.source_health.stale.length;
   const urgent = (data.cards.actively_exploited ?? 0) + (data.cards.kev_added ?? 0);
@@ -157,6 +171,42 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </Fold>
 
       {rampart ? <RampartCard env={rampart} /> : null}
+
+      {/* The executive block. It sits above the threat table because it answers
+          the question the table cannot: not "what is worst today" but "what
+          shape is my exposure in". It only renders for an owner with something
+          registered — charts over an empty inventory would be a first run that
+          looks broken rather than unconfigured. */}
+      {summary && summary.reaching > 0 ? (
+        <>
+          <div className="figures">
+            <Figure
+              value={summary.figures.in_kev}
+              of={summary.figures.total}
+              label="Known exploited"
+              hot={summary.figures.in_kev > 0}
+            />
+            <Figure
+              value={summary.figures.has_public_exploit}
+              of={summary.figures.total}
+              label="Public exploit code"
+              hot={summary.figures.has_public_exploit > 0}
+            />
+            <Figure
+              value={summary.figures.has_detection_rule}
+              of={summary.figures.total}
+              label="Detection rule exists"
+            />
+            <Figure value={summary.environment.assets} label="Assets registered" />
+          </div>
+
+          <div className="chart-grid">
+            <VerdictDonut data={summary.verdict} />
+            <SeverityColumns data={summary.severity} scope="of what reaches you" />
+            <AssetColumns data={summary.assets} />
+          </div>
+        </>
+      ) : null}
 
       <Panel
         title={urgent > 0 ? "Start here" : "Highest relevance"}
