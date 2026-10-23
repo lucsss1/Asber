@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.api.common import window_start
 from app.api.deps import current_owner
 from app.db import get_db
 from app.models import EntityLink, EnvironmentAsset, EnvironmentMatch, Vulnerability
@@ -117,6 +118,37 @@ def environment_summary(session: Session = Depends(get_db),
             "has_detection_rule": detectable,
             "total": total,
         },
+    }
+
+
+@router.get("/arrivals")
+def arrivals_summary(window: str = "7d", session: Session = Depends(get_db)):
+    """The severity mix of what arrived in the window — flow, not posture.
+
+    The environment chart answers "how bad is what touches me", which is a
+    standing shape. This answers "is what is coming in getting worse", which it
+    cannot: a quiet month and a brutal one look identical once everything has
+    settled into the same inventory.
+
+    Deliberately **not** a per-day series. The daily counts in this deployment
+    read 1,356 / 4 / nothing / 1,517 across consecutive days, and those swings
+    are the collector's machine sleeping rather than the world changing. A
+    chart of them would be a chart of somebody's uptime wearing the costume of
+    threat activity.
+    """
+    start = window_start(window)
+    if start is None and window not in ("all",):
+        raise HTTPException(400, "window must be 24h, 7d, 30d, 90d or all")
+
+    stmt = select(Vulnerability.cvss_severity, func.count())
+    if start is not None:
+        stmt = stmt.where(Vulnerability.first_seen >= start)
+    raw = {(sev or "UNSCORED"): n
+           for sev, n in session.execute(stmt.group_by(Vulnerability.cvss_severity)).all()}
+    return {
+        "window": window,
+        "severity": [{"severity": s, "count": raw.get(s, 0)} for s in SEVERITY_ORDER],
+        "total": sum(raw.values()),
     }
 
 

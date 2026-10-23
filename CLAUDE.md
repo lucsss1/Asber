@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **335 backend**, **12 frontend**):
+Tests (currently **338 backend**, **12 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it

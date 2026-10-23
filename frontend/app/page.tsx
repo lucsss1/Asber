@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { apiSafe, type AttackItem, type Doc, type ExploitItem, type Vuln } from "@/lib/api";
-import { fmtDateTime, num } from "@/lib/format";
+import { fmtDateTime } from "@/lib/format";
 import { Segmented, WINDOW_OPTIONS, one, type SP } from "@/components/Filters";
 import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
@@ -10,6 +10,12 @@ import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
 import { AssetColumns, Figure, SeverityColumns, VerdictDonut } from "@/components/Charts";
 
 export const dynamic = "force-dynamic";
+
+interface Arrivals {
+  window: string;
+  severity: { severity: string; count: number }[];
+  total: number;
+}
 
 interface Summary {
   environment: { id: number; name: string; assets: number };
@@ -51,19 +57,6 @@ const HEADLINE = [
   },
 ];
 
-/** Everything else: present, but not competing for attention. */
-const SECONDARY = [
-  { key: "new_pocs", label: "public PoCs", href: "/exploits?kind=poc" },
-  { key: "new_research", label: "research reports", href: "/research" },
-  { key: "new_cves", label: "CVEs published", href: "/vulnerabilities" },
-  { key: "new_exploits", label: "Exploits", href: "/exploits?kind=exploit" },
-  { key: "new_news", label: "News", href: "/news" },
-  { key: "threat_actors_seen", label: "Actors seen", href: "/actors" },
-  { key: "malware_seen", label: "Malware seen", href: "/malware" },
-  { key: "campaigns_seen", label: "Campaigns", href: "/campaigns" },
-  { key: "new_detection_rules", label: "Detection repos", href: "/exploits?kind=detection" },
-];
-
 const WINDOW_LABEL: Record<string, string> = {
   "24h": "the last 24 hours",
   "7d": "the last 7 days",
@@ -97,12 +90,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Only owners see this, and only when something is registered: an empty
   // card would be an advert for a feature on a page that answers a question.
   const owner = await canSeeRampart();
-  const [rampart, summary] = owner
-    ? await Promise.all([
-        apiSafe<EnvironmentView>("/api/rampart/environment"),
-        apiSafe<Summary>("/api/summary/environment"),
-      ])
-    : [null, null];
+  const [rampart, summary, arrivals] = await Promise.all([
+    owner ? apiSafe<EnvironmentView>("/api/rampart/environment") : null,
+    owner ? apiSafe<Summary>("/api/summary/environment") : null,
+    apiSafe<Arrivals>("/api/summary/arrivals", { window }),
+  ]);
 
   const unhealthy = data.source_health.errors.length + data.source_health.stale.length;
   const urgent = (data.cards.actively_exploited ?? 0) + (data.cards.kev_added ?? 0);
@@ -127,48 +119,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       ) : null}
 
-      {/* The answer, not a dashboard. Everything that is not the answer is
-          folded below, and the press is what tells you it is there. */}
-      <section className="lead">
-        {urgent > 0 ? (
-          <>
-            <p className="lead-line">
-              <span className="lead-count">{urgent}</span>
-              <span>{urgent === 1 ? "thing needs" : "things need"} your attention.</span>
-            </p>
-            <p className="lead-detail">
-              {HEADLINE.filter((c) => (data.cards[c.key] ?? 0) > 0).map((c, i) => (
-                <span key={c.key}>
-                  {i > 0 ? <span className="lead-sep">·</span> : null}
-                  <Link href={c.href} className="lead-link">
-                    <b>{data.cards[c.key]}</b> {c.hint}
-                    <Pending />
-                  </Link>
-                </span>
-              ))}
-            </p>
-          </>
-        ) : (
-          <p className="lead-line calm">
-            <span>Nothing needs you in {WINDOW_LABEL[window] ?? window}.</span>
-          </p>
-        )}
-      </section>
-
-      <Fold label="Everything else collected" count={SECONDARY.length}>
-      <div className="metric-strip">
-        {SECONDARY.map((m) => {
-          const value = data.cards[m.key] ?? 0;
-          return (
-            <Link key={m.key} href={m.href} className={`metric${value === 0 ? " is-zero" : ""}`}>
-              <b>{num(value)}</b>
-              {m.label}
-              <Pending />
-            </Link>
-          );
-        })}
-      </div>
-      </Fold>
+      {/* One line, not a hero. The hero spent 170px on ten words -- the worst
+          density on the page -- and on the default 24h window most of what it
+          counted was zero, so it amplified an empty window. What it was
+          actually for is the interrupt, and an interrupt is a sentence. */}
+      {urgent > 0 ? (
+        <p className="alert-line">
+          {HEADLINE.filter((c) => (data.cards[c.key] ?? 0) > 0).map((c, i) => (
+            <span key={c.key}>
+              {i > 0 ? <span className="lead-sep">·</span> : null}
+              <Link href={c.href} className="lead-link">
+                <b>{data.cards[c.key]}</b> {c.hint}
+                <Pending />
+              </Link>
+            </span>
+          ))}
+        </p>
+      ) : (
+        <p className="alert-line calm">Nothing needs you in {WINDOW_LABEL[window] ?? window}.</p>
+      )}
 
       {rampart ? <RampartCard env={rampart} /> : null}
 
@@ -203,6 +172,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="chart-grid">
             <VerdictDonut data={summary.verdict} />
             <SeverityColumns data={summary.severity} scope="of what reaches you" />
+            {/* Posture and flow, side by side. The chart before this one is a
+                standing shape; this is what came in during the window, which
+                that one cannot show — a quiet month and a brutal one look
+                identical once everything has settled into the same inventory.
+                Deliberately not a per-day series: the daily counts here read
+                1,356 / 4 / nothing / 1,517 across consecutive days, and those
+                swings are the collector's machine sleeping rather than the
+                world changing. */}
+            {arrivals && arrivals.total > 0 ? (
+              <SeverityColumns
+                data={arrivals.severity}
+                scope={`arrived in ${WINDOW_LABEL[window] ?? window}`}
+              />
+            ) : null}
             <AssetColumns data={summary.assets} />
           </div>
         </>

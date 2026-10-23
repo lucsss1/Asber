@@ -77,3 +77,25 @@ def test_corpus_summary_works_without_an_environment(client_env):
     body = client_env.get("/api/summary/corpus").json()
     assert [s["severity"] for s in body["severity"]] == list(SEVERITY_ORDER)
     assert body["total"] >= 1
+
+
+def test_arrivals_rejects_an_unknown_window(client_env):
+    assert client_env.get("/api/summary/arrivals", params={"window": "banana"}).status_code == 400
+
+
+def test_arrivals_reports_every_severity_class(client_env):
+    body = client_env.get("/api/summary/arrivals", params={"window": "30d"}).json()
+    assert [s["severity"] for s in body["severity"]] == list(SEVERITY_ORDER)
+    assert body["total"] == sum(s["count"] for s in body["severity"])
+
+
+def test_arrivals_is_flow_and_environment_is_posture(client_env):
+    """They answer different questions and are allowed to disagree.
+
+    Arrivals counts what was first seen inside the window, over the whole
+    corpus. The environment chart counts what matches an asset, whenever it
+    arrived. Conflating them would make a quiet week look like a safe one.
+    """
+    arrivals = client_env.get("/api/summary/arrivals", params={"window": "all"}).json()
+    env = client_env.get("/api/summary/environment").json()
+    assert arrivals["total"] >= env["reaching"]
