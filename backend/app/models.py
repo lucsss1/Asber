@@ -483,3 +483,60 @@ class DetectionRule(Base):
     tier: Mapped[int] = mapped_column(Integer, default=2)
     published_at: Mapped[datetime | None] = mapped_column(TZ, index=True)
     collected_at: Mapped[datetime] = mapped_column(TZ, default=utcnow, index=True)
+
+
+# ---------------------------------------------------------------------------
+# Indicators of compromise: hashes, URLs, domains, addresses
+# ---------------------------------------------------------------------------
+class Indicator(Base):
+    """One observable somebody has published as malicious.
+
+    The page this feeds is a lookup, not a feed. A list of thirty thousand
+    malicious URLs answers no operational question for a reader with no SIEM
+    to block them in and no logs to cross them against; "I have this hash from
+    an alert, is it known?" is a question, and it is the one these sources can
+    actually answer offline.
+
+    So the row is shaped for retrieval: ``value_norm`` is what gets looked up
+    (lowercased, and for a URL the host as well, in ``host``), and everything
+    else is context to show once a match is found.
+
+    Correlation to ATT&CK lives in ``entity_links`` like every other edge.
+    Measured on the recent dumps: of 60 malware families MalwareBazaar names,
+    12 resolve to an ATT&CK software object after suffix normalisation, which
+    covers 88 of 400 signed samples. The link is thin and is labelled as such
+    on screen rather than implied to be complete -- Mirai, the single largest
+    family, is absent from the Enterprise matrix entirely.
+    """
+    __tablename__ = "indicators"
+    __table_args__ = (UniqueConstraint("source_key", "kind", "value_norm", name="uq_indicator"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_key: Mapped[str] = mapped_column(String(64), index=True)
+    #: sha256|md5|sha1|url|domain|ipv4
+    kind: Mapped[str] = mapped_column(String(16), index=True)
+    #: as published, for display
+    value: Mapped[str] = mapped_column(Text)
+    #: lowercased and trimmed, for lookup
+    value_norm: Mapped[str] = mapped_column(String(600), index=True)
+    #: for a URL, the host on its own, so a domain lookup finds it too
+    host: Mapped[str | None] = mapped_column(String(300), index=True)
+    #: the family the source named, verbatim
+    family: Mapped[str | None] = mapped_column(String(200), index=True)
+    #: that family resolved to an ATT&CK software object, when one exists
+    attack_stix_id: Mapped[str | None] = mapped_column(String(100), index=True)
+    #: malware_download | payload | c2 | …, upstream's own word
+    threat: Mapped[str | None] = mapped_column(String(64))
+    #: online|offline|unknown — URLhaus tracks whether it is still serving
+    status: Mapped[str | None] = mapped_column(String(32), index=True)
+    file_type: Mapped[str | None] = mapped_column(String(64))
+    mime_type: Mapped[str | None] = mapped_column(String(120))
+    #: the other hashes of the same sample, so one lookup answers for all three
+    related: Mapped[dict] = mapped_column(default=dict)
+    tags: Mapped[list] = mapped_column(default=list)
+    reporter: Mapped[str | None] = mapped_column(String(120))
+    reference_url: Mapped[str | None] = mapped_column(Text)
+    tier: Mapped[int] = mapped_column(Integer, default=2)
+    first_seen_at: Mapped[datetime | None] = mapped_column(TZ, index=True)
+    last_seen_at: Mapped[datetime | None] = mapped_column(TZ)
+    collected_at: Mapped[datetime] = mapped_column(TZ, default=utcnow, index=True)

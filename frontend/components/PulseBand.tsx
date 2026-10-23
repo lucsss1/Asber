@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { num } from "@/lib/format";
 
 export type Day = { date: string; total: number; exploited: number; kev: number };
 
@@ -43,7 +44,7 @@ export function PulseBand({ series, peak, busiest }: { series: Day[]; peak: numb
           <>
             <span className="pulse-caption">{shown.date.slice(5)}</span>
             <span className="pulse-peak">
-              <b>{shown.total.toLocaleString()}</b> updated
+              <b>{num(shown.total)}</b> updated
               {shown.exploited ? <> · <b>{shown.exploited}</b> exploited</> : null}
             </span>
           </>
@@ -51,7 +52,7 @@ export function PulseBand({ series, peak, busiest }: { series: Day[]; peak: numb
           <>
             <span className="pulse-caption">30 days</span>
             <span className="pulse-peak">
-              peak <b>{busiest.total.toLocaleString()}</b> on {busiest.date.slice(5)}
+              peak <b>{num(busiest.total)}</b> on {busiest.date.slice(5)}
             </span>
           </>
         )}

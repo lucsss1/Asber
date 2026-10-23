@@ -6,9 +6,25 @@ import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
 import { Pending } from "@/components/Pending";
 import { Fold } from "@/components/Fold";
-import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
+import { canSeeRampart } from "@/lib/rampart";
+import { AssetColumns, Figure, SeverityColumns, VerdictDonut } from "@/components/Charts";
 
 export const dynamic = "force-dynamic";
+
+interface Arrivals {
+  window: string;
+  severity: { severity: string; count: number }[];
+  total: number;
+}
+
+interface Summary {
+  environment: { id: number; name: string; assets: number };
+  reaching: number;
+  verdict: { state: string; label: string; count: number }[];
+  severity: { severity: string; count: number }[];
+  assets: { id: number; label: string; product: string; affected: number; possibly_affected: number }[];
+  figures: { in_kev: number; has_public_exploit: number; has_detection_rule: number; total: number };
+}
 
 interface Overview {
   window: string;
@@ -39,19 +55,6 @@ const HEADLINE = [
     hint: "added to the CISA KEV catalog",
     alert: true,
   },
-];
-
-/** Everything else: present, but not competing for attention. */
-const SECONDARY = [
-  { key: "new_pocs", label: "public PoCs", href: "/exploits?kind=poc" },
-  { key: "new_research", label: "research reports", href: "/research" },
-  { key: "new_cves", label: "CVEs published", href: "/vulnerabilities" },
-  { key: "new_exploits", label: "Exploits", href: "/exploits?kind=exploit" },
-  { key: "new_news", label: "News", href: "/news" },
-  { key: "threat_actors_seen", label: "Actors seen", href: "/actors" },
-  { key: "malware_seen", label: "Malware seen", href: "/malware" },
-  { key: "campaigns_seen", label: "Campaigns", href: "/campaigns" },
-  { key: "new_detection_rules", label: "Detection repos", href: "/exploits?kind=detection" },
 ];
 
 const WINDOW_LABEL: Record<string, string> = {
@@ -86,9 +89,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   // Only owners see this, and only when something is registered: an empty
   // card would be an advert for a feature on a page that answers a question.
-  const rampart = (await canSeeRampart())
-    ? await apiSafe<EnvironmentView>("/api/rampart/environment")
-    : null;
+  const owner = await canSeeRampart();
+  // One environment call, not two: the strip that used the other one is gone
+  // and everything it said is in the figures row.
+  const [summary, arrivals] = await Promise.all([
+    owner ? apiSafe<Summary>("/api/summary/environment") : null,
+    apiSafe<Arrivals>("/api/summary/arrivals", { window }),
+  ]);
 
   const unhealthy = data.source_health.errors.length + data.source_health.stale.length;
   const urgent = (data.cards.actively_exploited ?? 0) + (data.cards.kev_added ?? 0);
@@ -113,50 +120,89 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       ) : null}
 
-      {/* The answer, not a dashboard. Everything that is not the answer is
-          folded below, and the press is what tells you it is there. */}
-      <section className="lead">
-        {urgent > 0 ? (
-          <>
-            <p className="lead-line">
-              <span className="lead-count">{urgent}</span>
-              <span>{urgent === 1 ? "thing needs" : "things need"} your attention.</span>
-            </p>
-            <p className="lead-detail">
-              {HEADLINE.filter((c) => (data.cards[c.key] ?? 0) > 0).map((c, i) => (
-                <span key={c.key}>
-                  {i > 0 ? <span className="lead-sep">·</span> : null}
-                  <Link href={c.href} className="lead-link">
-                    <b>{data.cards[c.key]}</b> {c.hint}
-                    <Pending />
-                  </Link>
-                </span>
-              ))}
-            </p>
-          </>
-        ) : (
-          <p className="lead-line calm">
-            <span>Nothing needs you in {WINDOW_LABEL[window] ?? window}.</span>
-          </p>
-        )}
-      </section>
+      {/* The Rampart strip that used to sit here is gone. It read "1,749
+          reaching your environment · 810 to check · 3 assets", and every one
+          of those numbers is in the row below it — twice, since the donut
+          draws the same split. Three stacked bands put 223px of banner
+          between the title and the first real content; this is one row now. */}
 
-      <Fold label="Everything else collected" count={SECONDARY.length}>
-      <div className="metric-strip">
-        {SECONDARY.map((m) => {
-          const value = data.cards[m.key] ?? 0;
-          return (
-            <Link key={m.key} href={m.href} className={`metric${value === 0 ? " is-zero" : ""}`}>
-              <b>{value.toLocaleString()}</b>
-              {m.label}
-              <Pending />
-            </Link>
-          );
-        })}
-      </div>
-      </Fold>
+      {/* The window's interrupt is a figure, not a band: it is a labelled
+          count, which is exactly what the tiles beside it are. The scope sits
+          on every tile — "in the last 24 hours" against "of 2,559 reaching
+          you" — because two denominators in one row have to say which is
+          which. */}
+      {!summary && urgent > 0 ? (
+        <p className="alert-line">
+          {HEADLINE.filter((c) => (data.cards[c.key] ?? 0) > 0).map((c, i) => (
+            <span key={c.key}>
+              {i > 0 ? <span className="lead-sep">·</span> : null}
+              <Link href={c.href} className="lead-link">
+                <b>{data.cards[c.key]}</b> {c.hint}
+                <Pending />
+              </Link>
+            </span>
+          ))}
+        </p>
+      ) : null}
 
-      {rampart ? <RampartCard env={rampart} /> : null}
+      {/* The executive block. It sits above the threat table because it answers
+          the question the table cannot: not "what is worst today" but "what
+          shape is my exposure in". It only renders for an owner with something
+          registered — charts over an empty inventory would be a first run that
+          looks broken rather than unconfigured. */}
+      {summary && summary.reaching > 0 ? (
+        <>
+          <div className="figures">
+            {urgent > 0 ? (
+              <Figure
+                value={urgent}
+                scope={`in ${WINDOW_LABEL[window] ?? window}`}
+                label="Needs you now"
+                href="/threats?exploited=true"
+                hot
+              />
+            ) : null}
+            <Figure
+              value={summary.figures.in_kev}
+              of={summary.figures.total}
+              label="Known exploited"
+              hot={summary.figures.in_kev > 0}
+            />
+            <Figure
+              value={summary.figures.has_public_exploit}
+              of={summary.figures.total}
+              label="Public exploit code"
+              hot={summary.figures.has_public_exploit > 0}
+            />
+            <Figure
+              value={summary.figures.has_detection_rule}
+              of={summary.figures.total}
+              label="Detection rule exists"
+            />
+            <Figure value={summary.environment.assets} label="Assets registered" />
+          </div>
+
+          <div className="chart-grid">
+            <VerdictDonut data={summary.verdict} />
+            <SeverityColumns data={summary.severity} scope="of what reaches you" />
+            {/* Posture and flow, side by side. The chart before this one is a
+                standing shape; this is what came in during the window, which
+                that one cannot show — a quiet month and a brutal one look
+                identical once everything has settled into the same inventory.
+                Deliberately not a per-day series: the daily counts here read
+                1,356 / 4 / nothing / 1,517 across consecutive days, and those
+                swings are the collector's machine sleeping rather than the
+                world changing. */}
+            {arrivals && arrivals.total > 0 ? (
+              <SeverityColumns
+                data={arrivals.severity}
+                scope={`arrived in ${WINDOW_LABEL[window] ?? window}`}
+              />
+            ) : null}
+            <AssetColumns data={summary.assets} />
+          </div>
+        </>
+      ) : null}
 
       <Panel
         title={urgent > 0 ? "Start here" : "Highest relevance"}
@@ -224,24 +270,3 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 }
 
 
-/** What the owner's own environment looks like today, on the page they open first. */
-function RampartCard({ env }: { env: EnvironmentView }) {
-  if (!env.assets.length) return null;
-  const { affected, possibly_affected: possibly } = env.counts;
-  return (
-    <Link href="/rampart/threats" className="rampart-card">
-      <span className="rampart-card-label">Rampart</span>
-      <span className="rampart-card-body">
-        {affected > 0 ? (
-          <>
-            <b className="rampart-hot">{affected}</b> reaching your environment
-          </>
-        ) : (
-          <>Nothing reaching your environment</>
-        )}
-        {possibly > 0 ? <span className="faint"> · {possibly} to check</span> : null}
-      </span>
-      <span className="faint">{env.assets.length} assets →</span>
-    </Link>
-  );
-}

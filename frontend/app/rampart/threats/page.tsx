@@ -5,7 +5,7 @@ import { apiSafe, type Paged, type Vuln } from "@/lib/api";
 import { canSeeRampart, STATE_LABELS, type Match } from "@/lib/rampart";
 import { href, one, Segmented, Toggles, WINDOW_OPTIONS, type SP } from "@/components/Filters";
 import { Empty, PageHead, Panel, Risk, Signals } from "@/components/ui";
-import { relative, vulnLabel } from "@/lib/format";
+import { num, relative, vulnLabel } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +88,7 @@ export default async function RampartThreatsPage({ searchParams }: { searchParam
                 the tabs up: a CVE can be affected on one asset and merely
                 possible on another, and the sum would count it twice. */}
             <span className="asset-tab-counts">
-              <b>{data.environment_total.toLocaleString()}</b> {STATE_NOUN[state] ?? "shown"}
+              <b>{num(data.environment_total)}</b> {STATE_NOUN[state] ?? "shown"}
             </span>
           </Link>
           {data.assets.map((a) => (
@@ -100,13 +100,13 @@ export default async function RampartThreatsPage({ searchParams }: { searchParam
               <span className="asset-tab-name">{a.label}</span>
               <span className="asset-tab-counts">
                 <b className={a.affected && state !== "not_affected" ? "asset-tab-hot" : undefined}>
-                  {a.total.toLocaleString()}
+                  {num(a.total)}
                 </b>{" "}
                 {STATE_NOUN[state] ?? "shown"}
                 {/* Only when it splits the number: "14 reaching you · 14 to
                     check" says nothing twice. */}
                 {!state && a.affected && a.possibly_affected ? (
-                  <span className="faint"> · {a.possibly_affected.toLocaleString()} to check</span>
+                  <span className="faint"> · {num(a.possibly_affected)} to check</span>
                 ) : null}
               </span>
             </Link>
@@ -131,10 +131,10 @@ export default async function RampartThreatsPage({ searchParams }: { searchParam
       <Panel
         title={
           data.asset_id
-            ? `${data.total.toLocaleString()} on ${
+            ? `${num(data.total)} on ${
                 data.assets.find((a) => a.id === data.asset_id)?.label ?? "this asset"
               }`
-            : `${data.total.toLocaleString()} matching your environment`
+            : `${num(data.total)} matching your environment`
         }
         flush
       >

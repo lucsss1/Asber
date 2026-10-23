@@ -47,7 +47,7 @@ docker compose up -d --build backend  # backend only — code is baked into the
                                       # image, so `restart` will NOT pick up edits
 ```
 
-Tests (currently **282 backend**, **8 frontend**):
+Tests (currently **338 backend**, **12 frontend**):
 
 ```bash
 # backend — source is not in the image, so mount it
@@ -112,6 +112,14 @@ surface language; it does not get to touch the rules below.
   entry choreography on anything read dozens of times a day, no. The command
   palette has **no** open animation on purpose.
 
+- **Charts measure before they draw.** Three candidates for the Overview were
+  dropped because the numbers said a chart would show nothing (exploit
+  availability is 2,532/17/10; detection coverage is 4 of 2,559) — those are
+  figures. Severity is an ordered scale, so its bars are a single hue stepping
+  monotonically in lightness (`--fill-*`), not the `--risk-*` ink tokens, which
+  are tuned for text contrast and come out mustard as fills. Categorical chart
+  hues are validated with the dataviz skill's script, not by eye.
+
 Full tokens and the reasoning live at the top of `frontend/app/globals.css`.
 
 ---
@@ -148,6 +156,16 @@ The owner's technology inventory, matched against the corpus.
   an assertion that depended on it collapsed. Anchor dates to today through a
   helper in `conftest`; `test_fixture_freshness.py` fails loudly if a fixture
   grows an unanchored recent date.
+- **`toLocaleString()` renders differently on each side.** With no locale it
+  follows whoever runs it: `en-US` in the server container, the operating
+  system's regional settings in Chromium — "2,149" against "2.149" on a
+  machine set to Brazil, even while `navigator.language` reports `en-US`. In a
+  client component that is a hydration mismatch (React #418, which discards
+  the subtree and leaves its controls briefly dead); across components it just
+  makes one screen disagree with itself. Use `num()`. Anything a client
+  component derives from `Date.now()` during render has the same shape of
+  problem — format on the server and pass the string down.
+  `frontend/lib/hydration.test.ts` fails on both.
 - **The suite used to call the live NVD.** Workers get their HTTP client
   injected, but the API's on-demand CVE lookup built its own in a module global
   and escaped every mock transport. `test_cve_detail_rejects_garbage` broke the
@@ -182,7 +200,6 @@ to make:
   live in third-party curated repositories of varying quality. That is a
   sourcing decision, not an implementation one: it would be the first source
   Asber carries that nobody authoritative publishes. See `ROADMAP.md`.
-- **Phase 2's IOC half.** `malwarebazaar`, `urlhaus`, `otx` and `virustotal`
-  still have no worker, and `/iocs` waits on them. The two abuse.ch CSV dumps
-  are public (verified 200 without a key); `otx` and `virustotal` need
-  credentials that are not configured. See `ROADMAP.md`.
+- **`otx` and `virustotal` need credentials.** They are the last two Phase 2
+  sources without a worker, and neither key is configured. Both are free to
+  register. See `ROADMAP.md`.

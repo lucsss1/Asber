@@ -22,6 +22,9 @@ def build_worker(key: str) -> BaseWorker:
     if sdef.worker == "github":
         from app.workers.github import GithubWorker
         return GithubWorker()
+    if sdef.worker in ("malwarebazaar", "urlhaus"):
+        from app.workers.abusech import MalwareBazaarWorker, UrlhausWorker
+        return MalwareBazaarWorker() if sdef.worker == "malwarebazaar" else UrlhausWorker()
     if sdef.worker == "sigma":
         from app.workers.sigma import SigmaWorker
         return SigmaWorker()

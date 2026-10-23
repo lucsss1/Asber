@@ -1,4 +1,5 @@
 import { apiSafe, type Paged, type Vuln } from "@/lib/api";
+import { num } from "@/lib/format";
 import {
   ClearFilters,
   PillSelect,
@@ -80,7 +81,7 @@ export default async function VulnerabilitiesPage({ searchParams }: { searchPara
         <div className="notice notice-danger">API unavailable.</div>
       ) : (
         <>
-          <Panel title={`${data.total.toLocaleString()} vulnerabilities`} flush>
+          <Panel title={`${num(data.total)} vulnerabilities`} flush>
             <ThreatTable items={data.items} />
           </Panel>
           <Pagination

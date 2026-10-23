@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { num } from "@/lib/format";
 
 import { apiSafe, type Paged } from "@/lib/api";
 import { ClearFilters, PillSelect, Segmented, TextFilters, one, type SP } from "@/components/Filters";
@@ -91,10 +92,10 @@ export default async function DetectionPage({ searchParams }: { searchParams: Pr
           how many rules exist. */}
       <p className="lead-line">
         <b>{overview.cves_covered}</b> of your{" "}
-        <b>{overview.kev_total.toLocaleString()}</b> exploited CVEs have a public detection rule.
+        <b>{num(overview.kev_total)}</b> exploited CVEs have a public detection rule.
       </p>
       <p className="lead-sub">
-        From {overview.rules.toLocaleString()} rules covering {overview.techniques_covered} ATT&CK
+        From {num(overview.rules)} rules covering {overview.techniques_covered} ATT&CK
         techniques. The CVE coverage is thin because detection gets written for what is actually
         being exploited — which is why every CVE named here is already in CISA KEV.{" "}
         <Link href="/detection?has_cve=true" className="link">
@@ -129,7 +130,7 @@ export default async function DetectionPage({ searchParams }: { searchParams: Pr
         ]}
       />
 
-      <Panel title={`${data.total.toLocaleString()} rules`} flush>
+      <Panel title={`${num(data.total)} rules`} flush>
         {data.items.length ? (
           <table>
             <thead>

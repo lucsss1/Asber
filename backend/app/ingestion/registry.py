@@ -225,7 +225,7 @@ SOURCE_REGISTRY: list[SourceDef] = [
         key="malwarebazaar", name="MalwareBazaar (abuse.ch)",
         homepage="https://bazaar.abuse.ch/", endpoint="https://bazaar.abuse.ch/export/csv/recent/",
         category="ioc", source_type="Malware Repository (metadata only)", tier=2, method="csv",
-        interval=1 * HOUR, phase=2, enabled_by_default=False,
+        interval=1 * HOUR, phase=2, enabled_by_default=False, worker="malwarebazaar",
         notes="API (mb-api.abuse.ch) now requires Auth-Key (401 without). CSV export is public. "
               "Sample download is NOT implemented (MALWARE_DOWNLOAD_ENABLED=false).",
     ),
@@ -233,8 +233,10 @@ SOURCE_REGISTRY: list[SourceDef] = [
         key="urlhaus", name="URLhaus (abuse.ch)",
         homepage="https://urlhaus.abuse.ch/", endpoint="https://urlhaus.abuse.ch/downloads/csv_recent/",
         category="ioc", source_type="Malicious URL Database", tier=2, method="csv",
-        interval=1 * HOUR, phase=2, enabled_by_default=False,
-        notes="API (urlhaus-api.abuse.ch) now requires Auth-Key (401 without). CSV dump is public.",
+        interval=1 * HOUR, phase=2, enabled_by_default=False, worker="urlhaus",
+        max_bytes=60 * 1024 * 1024,
+        notes="API (urlhaus-api.abuse.ch) now requires Auth-Key (401 without). CSV dump is public. "
+              "The recent dump runs ~8 MB / 33k rows; the cap leaves room for it to grow.",
     ),
     SourceDef(
         key="virustotal", name="VirusTotal",

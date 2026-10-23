@@ -2,6 +2,7 @@ import Link from "next/link";
 import { apiSafe, type AttackItem, type Paged } from "@/lib/api";
 import { ClearFilters, TextFilters, Toggles, one, type SP } from "@/components/Filters";
 import { Empty, PageHead, Pagination, Panel } from "@/components/ui";
+import { num } from "@/lib/format";
 
 /** Shared list page for ATT&CK groups / software / campaigns. */
 export async function AttackListPage({
@@ -55,7 +56,7 @@ export async function AttackListPage({
         <div className="notice notice-danger">API unavailable.</div>
       ) : (
         <>
-          <Panel title={`${data.total.toLocaleString()} entries`} flush>
+          <Panel title={`${num(data.total)} entries`} flush>
             {data.items.length ? (
               <table>
                 <thead>
