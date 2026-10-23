@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { num } from "@/lib/format";
 
 /**
@@ -208,17 +210,32 @@ export function AssetColumns({ data }: {
  *  zero, and as a slice of a pie it is a hairline — both of which overstate
  *  how much the reader can see and understate how little coverage there is.
  */
-export function Figure({ value, of, label, hot }: {
+export function Figure({ value, of, scope, label, hot, href }: {
   value: number;
   of?: number;
+  /** Replaces the "of N reaching you" note when the tile counts something else. */
+  scope?: string;
   label: string;
   hot?: boolean;
+  href?: string;
 }) {
-  return (
-    <div className={`figure${hot ? " hot" : ""}`}>
+  // Every tile states its own scope. A row that mixes "in this window" with
+  // "of everything that reaches you" holds two denominators, and the reader
+  // should not have to infer which tile is on which.
+  const note = scope ?? (of !== undefined ? `of ${num(of)} reaching you` : null);
+  const body = (
+    <>
       <div className="figure-value">{num(value)}</div>
       <div className="figure-label">{label}</div>
-      {of !== undefined ? <div className="figure-of">of {num(of)} reaching you</div> : null}
-    </div>
+      {note ? <div className="figure-of">{note}</div> : null}
+    </>
+  );
+  const className = `figure${hot ? " hot" : ""}${href ? " figure-link" : ""}`;
+  return href ? (
+    <Link href={href} className={className}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
   );
 }

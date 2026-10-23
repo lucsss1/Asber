@@ -6,7 +6,7 @@ import { DocList, Empty, PageHead, Panel, ThreatTable } from "@/components/ui";
 import { IconAlert } from "@/components/icons";
 import { Pending } from "@/components/Pending";
 import { Fold } from "@/components/Fold";
-import { canSeeRampart, type EnvironmentView } from "@/lib/rampart";
+import { canSeeRampart } from "@/lib/rampart";
 import { AssetColumns, Figure, SeverityColumns, VerdictDonut } from "@/components/Charts";
 
 export const dynamic = "force-dynamic";
@@ -90,8 +90,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Only owners see this, and only when something is registered: an empty
   // card would be an advert for a feature on a page that answers a question.
   const owner = await canSeeRampart();
-  const [rampart, summary, arrivals] = await Promise.all([
-    owner ? apiSafe<EnvironmentView>("/api/rampart/environment") : null,
+  // One environment call, not two: the strip that used the other one is gone
+  // and everything it said is in the figures row.
+  const [summary, arrivals] = await Promise.all([
     owner ? apiSafe<Summary>("/api/summary/environment") : null,
     apiSafe<Arrivals>("/api/summary/arrivals", { window }),
   ]);
@@ -119,11 +120,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       ) : null}
 
-      {/* One line, not a hero. The hero spent 170px on ten words -- the worst
-          density on the page -- and on the default 24h window most of what it
-          counted was zero, so it amplified an empty window. What it was
-          actually for is the interrupt, and an interrupt is a sentence. */}
-      {urgent > 0 ? (
+      {/* The Rampart strip that used to sit here is gone. It read "1,749
+          reaching your environment · 810 to check · 3 assets", and every one
+          of those numbers is in the row below it — twice, since the donut
+          draws the same split. Three stacked bands put 223px of banner
+          between the title and the first real content; this is one row now. */}
+
+      {/* The window's interrupt is a figure, not a band: it is a labelled
+          count, which is exactly what the tiles beside it are. The scope sits
+          on every tile — "in the last 24 hours" against "of 2,559 reaching
+          you" — because two denominators in one row have to say which is
+          which. */}
+      {!summary && urgent > 0 ? (
         <p className="alert-line">
           {HEADLINE.filter((c) => (data.cards[c.key] ?? 0) > 0).map((c, i) => (
             <span key={c.key}>
@@ -135,11 +143,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </span>
           ))}
         </p>
-      ) : (
-        <p className="alert-line calm">Nothing needs you in {WINDOW_LABEL[window] ?? window}.</p>
-      )}
-
-      {rampart ? <RampartCard env={rampart} /> : null}
+      ) : null}
 
       {/* The executive block. It sits above the threat table because it answers
           the question the table cannot: not "what is worst today" but "what
@@ -149,6 +153,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {summary && summary.reaching > 0 ? (
         <>
           <div className="figures">
+            {urgent > 0 ? (
+              <Figure
+                value={urgent}
+                scope={`in ${WINDOW_LABEL[window] ?? window}`}
+                label="Needs you now"
+                href="/threats?exploited=true"
+                hot
+              />
+            ) : null}
             <Figure
               value={summary.figures.in_kev}
               of={summary.figures.total}
@@ -257,24 +270,3 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 }
 
 
-/** What the owner's own environment looks like today, on the page they open first. */
-function RampartCard({ env }: { env: EnvironmentView }) {
-  if (!env.assets.length) return null;
-  const { affected, possibly_affected: possibly } = env.counts;
-  return (
-    <Link href="/rampart/threats" className="rampart-card">
-      <span className="rampart-card-label">Rampart</span>
-      <span className="rampart-card-body">
-        {affected > 0 ? (
-          <>
-            <b className="rampart-hot">{affected}</b> reaching your environment
-          </>
-        ) : (
-          <>Nothing reaching your environment</>
-        )}
-        {possibly > 0 ? <span className="faint"> · {possibly} to check</span> : null}
-      </span>
-      <span className="faint">{env.assets.length} assets →</span>
-    </Link>
-  );
-}

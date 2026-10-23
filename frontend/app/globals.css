@@ -1420,3 +1420,12 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
 }
 .alert-line.calm { color: var(--ink-3); font-size: 14px; }
 .alert-line b { color: var(--risk-critical); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* A figure that is also a destination. The press feedback is the whole
+   affordance here — there is no underline, because a row of tiles with four
+   underlines in it stops reading as numbers. */
+.figure-link { display: block; transition: background 120ms ease, transform 140ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .figure-link:hover { background: var(--signal-wash); }
+}
+.figure-link:active { transform: scale(0.99); }
