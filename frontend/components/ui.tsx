@@ -12,7 +12,8 @@ export function PageHead({
   children,
 }: {
   title: string;
-  sub?: string;
+  /** A node, not just a string, so a page can hang a quiet caveat off it. */
+  sub?: React.ReactNode;
   right?: React.ReactNode;
   children?: React.ReactNode;
 }) {

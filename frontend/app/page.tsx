@@ -104,21 +104,29 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <>
       <PageHead
         title="Overview"
-        sub={`What changed in ${WINDOW_LABEL[window] ?? window}. Updated ${fmtDateTime(data.generated_at)}.`}
+        sub={
+          <>
+            What changed in {WINDOW_LABEL[window] ?? window}. Updated{" "}
+            {fmtDateTime(data.generated_at)}.
+            {/* The caveat rides on the subtitle instead of claiming a band of
+                its own. It still has to be said — it is the reason the numbers
+                below might be wrong — but it is an instrument fault, not a
+                threat, and the band it used to occupy was amber. Amber is
+                reserved for the risk scale here, so a stalled collector was
+                wearing the one colour that is supposed to mean danger. */}
+            {unhealthy > 0 ? (
+              <>
+                {" · "}
+                <Link href="/sources" className="sub-caveat">
+                  {unhealthy} source{unhealthy === 1 ? "" : "s"} stale, so this may be
+                  incomplete
+                </Link>
+              </>
+            ) : null}
+          </>
+        }
         right={<Segmented base="/" sp={sp} param="window" options={WINDOW_OPTIONS} fallback="24h" />}
       />
-
-      {unhealthy > 0 ? (
-        <div className="notice notice-warn">
-          <IconAlert />
-          <div>
-            <b>
-              {unhealthy} source{unhealthy === 1 ? "" : "s"} stale or failing.
-            </b>{" "}
-            This view may be missing data. <Link href="/sources" className="link">Check source health →</Link>
-          </div>
-        </div>
-      ) : null}
 
       {/* The Rampart strip that used to sit here is gone. It read "1,749
           reaching your environment · 810 to check · 3 assets", and every one
