@@ -1429,3 +1429,18 @@ details.more[open] > summary { color: var(--ink); background: var(--surface-2); 
   .figure-link:hover { background: var(--signal-wash); }
 }
 .figure-link:active { transform: scale(0.99); }
+
+/* A caveat, not an alarm. It rides on the subtitle rather than claiming a
+   band, and it is deliberately not warm: a stalled collector is an instrument
+   fault, and amber in this system means something is a threat. The dotted
+   underline says "there is more behind this" without the weight of a link. */
+.sub-caveat {
+  color: var(--ink-3);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--rule-strong);
+  transition: color 120ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sub-caveat:hover { color: var(--ink-2); text-decoration-color: var(--ink-3); }
+}
