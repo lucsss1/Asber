@@ -193,7 +193,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 1,356 / 4 / nothing / 1,517 across consecutive days, and those
                 swings are the collector's machine sleeping rather than the
                 world changing. */}
-            {arrivals && arrivals.total > 0 ? (
+            {/* Two classes, not one row of zeros. "total > 0" let through a
+                chart of four empty columns and a single 1, which is the empty
+                chart this block exists to avoid: a shape needs something to
+                compare against before it is worth drawing. */}
+            {arrivals && arrivals.severity.filter((s) => s.count > 0).length >= 2 ? (
               <SeverityColumns
                 data={arrivals.severity}
                 scope={`arrived in ${WINDOW_LABEL[window] ?? window}`}
